@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#37474f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>3D-конструктор стеллажей</title>
+<style>
+  :root {
+    --bar-h: 64px;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: #ddd; color: #1f2a30;
+    font: 14px "Segoe UI", Roboto, Arial, sans-serif;
+    overscroll-behavior: none; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  #scene { position: fixed; inset: 0; }
+  #scene canvas { display: block; touch-action: none; }
+
+  .panel {
+    position: absolute; z-index: 10; top: 18px; width: 290px;
+    max-height: calc(100vh - 36px); overflow-y: auto;
+    padding: 18px; border-radius: 14px; background: rgba(255,255,255,.97);
+    box-shadow: 0 8px 28px #0002; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+  }
+  #settings { left: 18px; }
+  #estimate { right: 18px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  h2 { margin: 0; font-size: 18px; }
+  .sheet-close {
+    display: none; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: #eef2f3; color: #37474f; font-size: 16px; cursor: pointer; flex: 0 0 auto;
+  }
+  label { display: block; margin: 12px 0 6px; }
+  input, select { -webkit-user-select: auto; user-select: auto; }
+  input[type="number"], select {
+    width: 100%; padding: 9px; border: 1px solid #cbd2d6; border-radius: 8px;
+    background: white; font: inherit; font-size: 15px; color: inherit;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .check { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 4px; }
+  .check input { width: 20px; height: 20px; margin: 0; accent-color: #37474f; }
+  .stepper { display: flex; gap: 6px; }
+  .stepper input { flex: 1; min-width: 0; text-align: center; }
+  .stepper button {
+    flex: 0 0 40px; border: 1px solid #cbd2d6; border-radius: 8px; background: #f3f6f7;
+    color: #37474f; font-size: 20px; line-height: 1; cursor: pointer; touch-action: manipulation;
+  }
+  .stepper button:active { background: #dde4e7; }
+  .muted { color: #66757b; font-size: 12px; line-height: 1.45; }
+  .reset {
+    width: 100%; margin-top: 16px; padding: 11px; border: 0; border-radius: 8px;
+    background: #37474f; color: white; font: inherit; cursor: pointer; touch-action: manipulation;
+  }
+  .reset:hover { background: #263238; }
+  .help { margin-top: 14px; }
+  .help summary { cursor: pointer; font-weight: 600; color: #37474f; padding: 4px 0; }
+  .help ul { margin: 8px 0 0; padding-left: 18px; }
+  .help li { margin: 4px 0; }
+  .estimate-row { display: flex; justify-content: space-between; gap: 10px; margin: 11px 0; }
+  .estimate-row strong { white-space: nowrap; }
+  .total {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+    margin-top: 14px; padding-top: 13px; border-top: 1px solid #ddd;
+    font-size: 17px; font-weight: bold;
+  }
+  #total { color: #168050; white-space: nowrap; }
+
+  .fab {
+    position: absolute; z-index: 30; display: grid; place-items: center;
+    width: 44px; height: 44px; border: 1px solid #ccc; border-radius: 50%;
+    background: white; color: #37474f; box-shadow: 0 3px 12px #0003;
+    cursor: pointer; font-size: 19px; touch-action: manipulation;
+  }
+  #toggle { top: 18px; right: 326px; }
+  #fit { top: 72px; right: 326px; }
+
+  #mobilebar { display: none; }
+
+  #buttons, #dimension-layer { position: absolute; inset: 0; pointer-events: none; }
+  #buttons { z-index: 5; }
+  #dimension-layer { z-index: 4; overflow: hidden; }
+  #dimension-svg { width: 100%; height: 100%; overflow: visible; }
+  .control {
+    position: absolute; left: 0; top: 0; display: grid; place-items: center;
+    width: 28px; height: 28px; padding: 0; border: 2px solid white;
+    border-radius: 50%; color: white; font: bold 18px/1 Arial, sans-serif;
+    box-shadow: 0 2px 7px #0007; cursor: pointer; pointer-events: auto;
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .horizontal { background: #24a663; cursor: ew-resize; }
+  .vertical { background: #348dca; }
+  .remove { background: #dc5249; }
+  .support { background: #ef8a2c; font-size: 15px; cursor: ew-resize; }
+  .del-support { background: #b8322a; width: 22px; height: 22px; font-size: 14px; }
+  .control.disabled { background: #9aa3a7; opacity: .65; cursor: not-allowed; }
+  .pipe { background: #e4b528; color: #222; font-size: 14px; }
+  .pipe.broken { background: #8852b4; color: white; }
+  .control.active { box-shadow: 0 0 0 4px #ffffffaa, 0 2px 10px #0008; }
+  @media (hover: hover) { .control:hover { filter: brightness(.88); } }
+  #buttons.dragging .control:not(.active) { display: none !important; }
+
+  .dimension-label, #drag-label {
+    position: absolute; left: 0; top: 0; padding: 3px 6px; border-radius: 4px;
+    background: rgba(255,255,255,.94); color: #213d4b; white-space: nowrap;
+    font-size: 12px; font-weight: 600; box-shadow: 0 1px 4px #0002;
+  }
+  .dimension-label.span { font-size: 11px; font-weight: 500; color: #4f6169; padding: 1px 4px; }
+  .dimension-label.overhang { font-size: 11px; font-weight: 500; color: #9a6a2f; padding: 1px 4px; }
+  .dimension-label.depth { font-size: 11px; font-weight: 500; }
+  #drag-label {
+    z-index: 20; display: none; color: #12683d; pointer-events: none;
+    font-size: 13px; padding: 5px 9px; transform: translate(-50%, -50%);
+  }
+  .dim-line { stroke: #245971; stroke-width: 1.5; fill: none; }
+  .dim-tick { stroke: #245971; stroke-width: 1.5; }
+  .dim-line.span, .dim-tick.span { stroke: #7c929c; stroke-width: 1; }
+  .dim-line.overhang, .dim-tick.overhang { stroke: #b08a55; stroke-width: 1; }
+  .dim-line.overhang { stroke-dasharray: 4 3; }
+
+  #toast {
+    position: fixed; z-index: 60; left: 50%; top: calc(14px + var(--safe-t));
+    max-width: min(92vw, 460px); padding: 10px 14px; border-radius: 10px;
+    background: #263238; color: white; font-size: 13px; text-align: center;
+    box-shadow: 0 6px 20px #0004; pointer-events: none;
+    transform: translate(-50%, -160%); transition: transform .25s ease;
+  }
+  #toast.show { transform: translate(-50%, 0); }
+
+  #empty {
+    position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    padding: 18px 22px; border-radius: 14px; background: rgba(255,255,255,.96);
+    box-shadow: 0 8px 28px #0002; text-align: center;
+  }
+  #empty[hidden] { display: none; }
+  #empty p { margin: 0 0 4px; font-weight: 600; }
+
+  @media (pointer: coarse) {
+    .control { width: 40px; height: 40px; font-size: 22px; }
+    .support { font-size: 18px; }
+    .del-support { width: 32px; height: 32px; font-size: 17px; }
+    .pipe { font-size: 17px; }
+    #drag-label { font-size: 14px; }
+  }
+
+  /* ---------- Телефоны и небольшие планшеты ---------- */
+  @media (max-width: 900px) {
+    .panel {
+      position: fixed; z-index: 40; top: auto; width: auto;
+      left: calc(8px + var(--safe-l)); right: calc(8px + var(--safe-r));
+      bottom: calc(var(--bar-h) + var(--safe-b) + 8px);
+      max-height: min(64vh, 560px); padding: 14px 16px 18px; border-radius: 18px;
+      box-shadow: 0 -6px 30px #0003;
+      transform: translateY(calc(100% + var(--bar-h) + 60px)); visibility: hidden;
+      transition: transform .25s ease, visibility 0s linear .25s;
+    }
+    .panel.open { transform: none; visibility: visible; transition: transform .25s ease; }
+    .sheet-close { display: grid; }
+    h2 { font-size: 17px; }
+    input[type="number"], select { font-size: 16px; padding: 11px; }
+    .stepper button { flex-basis: 48px; font-size: 22px; }
+    .reset { padding: 13px; font-size: 15px; }
+    .estimate-row { font-size: 15px; }
+
+    #toggle { top: calc(12px + var(--safe-t)); right: calc(12px + var(--safe-r)); }
+    #fit { top: calc(64px + var(--safe-t)); right: calc(12px + var(--safe-r)); }
+    #toast { max-width: calc(100vw - 140px); }
+
+    #mobilebar {
+      display: flex; position: fixed; z-index: 45; left: 0; right: 0; bottom: 0;
+      height: calc(var(--bar-h) + var(--safe-b)); gap: 8px;
+      padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l));
+      background: rgba(255,255,255,.97); box-shadow: 0 -4px 20px #0002;
+    }
+    .tab {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      border: 0; border-radius: 12px; background: #eef2f3; color: #263238;
+      font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; touch-action: manipulation;
+    }
+    .tab.active { background: #37474f; color: white; }
+    .tab .tab-cap { font-weight: 500; opacity: .75; }
+    .tab strong { color: #168050; font-size: 17px; white-space: nowrap; }
+    .tab.active strong { color: #9ff0c4; }
+  }
+  @media (max-width: 900px) and (orientation: landscape) and (max-height: 520px) {
+    :root { --bar-h: 52px; }
+    .panel {
+      right: auto; width: 330px; top: calc(8px + var(--safe-t)); max-height: none;
+      transform: translateX(calc(-100% - 40px));
+    }
+    .panel.open { transform: none; }
+    #empty { top: 42%; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="dimension-layer"><svg id="dimension-svg"></svg></div>
+<div id="buttons"></div>
+<div id="drag-label"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="empty" hidden>
+  <p>Полок нет</p>
+  <button id="empty-add" class="reset" type="button">Добавить полку</button>
+</div>
+
+<aside id="settings" class="panel" aria-label="Настройки стеллажа">
+  <div class="panel-head">
+    <h2>Настройки стеллажа</h2>
+    <button class="sheet-close" type="button" aria-label="Закрыть">✕</button>
+  </div>
+  <label class="check"><input id="deep" type="checkbox"><span>Глубокие полки — 400 мм</span></label>
+
+  <label for="first">Длина первого пролёта, мм</label>
+  <div class="stepper">
+    <button type="button" data-for="first" data-step="-50" aria-label="Уменьшить">−</button>
+    <input id="first" type="number" inputmode="numeric" min="200" max="1500" step="10" value="500">
+    <button type="button" data-for="first" data-step="50" aria-label="Увеличить">+</button>
+  </div>
+
+  <label for="overhang">Свес щита за крайнюю опору, мм</label>
+  <div class="stepper">
+    <button type="button" data-for="overhang" data-step="-10" aria-label="Уменьшить">−</button>
+    <input id="overhang" type="number" inputmode="numeric" min="100" max="500" step="10" value="200">
+    <button type="button" data-for="overhang" data-step="10" aria-label="Увеличить">+</button>
+  </div>
+
+  <label for="newlen">Длина новой секции, мм</label>
+  <div class="stepper">
+    <button type="button" data-for="newlen" data-step="-100" aria-label="Уменьшить">−</button>
+    <input id="newlen" type="number" inputmode="numeric" min="200" max="6000" step="10" value="500">
+    <button type="button" data-for="newlen" data-step="100" aria-label="Увеличить">+</button>
+  </div>
+
+  <label for="height">Шаг по высоте, мм</label>
+  <select id="height">
+    <option>150</option><option>200</option><option selected>300</option>
+    <option>400</option><option>500</option>
+  </select>
+
+  <button id="reset" class="reset" type="button">Сбросить всё</button>
+
+  <details class="help">
+    <summary>Как пользоваться</summary>
+    <ul class="muted">
+      <li>Зелёный «+»: нажмите — добавится секция; потяните — щит удлиняется или укорачивается. При свесе больше 500 мм появляется новая опора.</li>
+      <li>Синий «+» добавляет полку сверху или снизу.</li>
+      <li>Красный «−» удаляет пролёт.</li>
+      <li>Оранжевая «⇔» двигает опору: пролёт 200–1500 мм, свес — от значения в настройках до 500 мм. «×» удаляет опору.</li>
+      <li>Жёлтая «✂» разрезает трубу, фиолетовая «↔» соединяет.</li>
+      <li>Под щитом: серые числа — пролёты, коричневые — свесы.</li>
+      <li>Один палец — вращение, два пальца — масштаб и сдвиг. «⤢» — показать весь стеллаж.</li>
+    </ul>
+  </details>
+</aside>
+
+<aside id="estimate" class="panel" aria-label="Расчёт стоимости">
+  <div class="panel-head">
+    <h2>Расчёт стоимости</h2>
+    <button class="sheet-close" type="button" aria-label="Закрыть">✕</button>
+  </div>
+  <div class="estimate-row"><span>Мебельный щит</span><strong id="wood-price">0 ₽</strong></div>
+  <div class="estimate-row"><span>Площадь щита</span><strong id="area">0 м²</strong></div>
+  <div class="estimate-row"><span>Трубки</span><strong id="pipe-price">0 ₽</strong></div>
+  <div class="estimate-row"><span>Количество трубок</span><strong id="pipe-count">0</strong></div>
+  <div class="total"><span>Итого</span><span id="total">0 ₽</span></div>
+  <p class="muted">Щит — 30 000 ₽/м²; каждая отдельная трубка — 1 000 ₽.
+    Фурнитура, крепёж, обработка и монтаж не включены.</p>
+</aside>
+
+<button id="toggle" class="fab" type="button" title="Скрыть размеры и управление" aria-label="Скрыть размеры и управление">◉</button>
+<button id="fit" class="fab" type="button" title="Показать весь стеллаж" aria-label="Показать весь стеллаж">⤢</button>
+
+<nav id="mobilebar">
+  <button id="tab-settings" class="tab" type="button">⚙ <span>Настройки</span></button>
+  <button id="tab-estimate" class="tab" type="button"><span class="tab-cap">Итого</span><strong id="mtotal">0 ₽</strong></button>
+</nav>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const C = {
+    minSpan: 200,
+    maxSpan: 1500,
+    maxOverhang: 500,
+    thickness: 20,
+    cap: 80,
+    pipeRadius: 10,
+    maxReach: 30000
+  };
+  const WOOD_RATE = 30000;
+  const PIPE_RATE = 1000;
+  const money = n => new Intl.NumberFormat("ru-RU").format(Math.round(n)) + " ₽";
+  const r10 = n => Math.round(n / 10) * 10;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const mqMobile = window.matchMedia("(max-width: 900px)");
+  const mqCoarse = window.matchMedia("(pointer: coarse)");
+  const isMobile = () => mqMobile.matches;
+  const isCoarse = () => mqCoarse.matches;
+
+  /* ---------------- Сцена ---------------- */
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#dedede");
+  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 10, 40000);
+  camera.position.set(650, 480, 1750);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, isCoarse() ? 1.75 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  $("scene").appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.12;
+  controls.minDistance = 300;
+  controls.maxDistance = 15000;
+  controls.target.set(250, 0, -80);
+  controls.update();
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const light = new THREE.DirectionalLight(0xffffff, 0.75);
+  light.castShadow = true;
+  const shadowSize = isCoarse() ? 1024 : 2048;
+  light.shadow.mapSize.set(shadowSize, shadowSize);
+  light.shadow.bias = -0.0008;
+  scene.add(light, light.target);
+
+  const woodMat = new THREE.MeshStandardMaterial({ color: "#a6753e", roughness: 0.82 });
+  const pipeMat = new THREE.MeshStandardMaterial({ color: "#202528", metalness: 0.25, roughness: 0.65 });
+  const fitMat = new THREE.MeshStandardMaterial({ color: "#bf9d5b", metalness: 0.7, roughness: 0.3 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: "#ececec" });
+
+  // Общие геометрии: переиспользуются при каждой перестройке.
+  const G = {
+    box: new THREE.BoxGeometry(1, 1, 1),
+    pipe: new THREE.CylinderGeometry(C.pipeRadius, C.pipeRadius, 1, 12),
+    ball: new THREE.SphereGeometry(15, 12, 12),
+    flange: new THREE.CylinderGeometry(35, 35, 5, 24),
+    ring: new THREE.CylinderGeometry(14, 14, 9, 12),
+    collar: new THREE.CylinderGeometry(13, 13, 18, 12),
+    bracket: new THREE.CylinderGeometry(15, 15, 24, 12),
+    cube: new THREE.BoxGeometry(25, 25, 25),
+    plane: new THREE.PlaneGeometry(1, 1)
+  };
+
+  const model = new THREE.Group();
+  scene.add(model);
+
+  /* ---------------- Состояние ---------------- */
+  // Щит: { id, y, x1, x2, supports: [x...] } — x1/x2 края щита, supports — оси опор.
+  let boards = [];
+  let nextId = 1;
+  let brokenPipes = new Set();
+  let visibleUI = true;
+  let buttons = [];
+  let dims = [];
+  let drag = null;
+  let needsRender = true;
+  let openSheet = null;
+
+  const depth = () => $("deep").checked ? 400 : 200;
+  const wallZ = () => $("deep").checked ? -300 : -150;
+  const woodZ = () => $("deep").checked ? -100 : -25;
+  const frontZ = () => woodZ() + depth() / 2;
+  const pipeKey = (x, y1, y2) => `${x}:${y1}:${y2}`;
+  const last = arr => arr[arr.length - 1];
+
+  function readNum(id, min, max, def) {
+    const raw = $(id).value;
+    const v = Number(raw);
+    return r10(clamp(raw !== "" && Number.isFinite(v) ? v : def, min, max));
+  }
+  const ovSetting = () => readNum("overhang", 100, C.maxOverhang, 200);
+  const firstSetting = () => readNum("first", C.minSpan, C.maxSpan, 500);
+  const newLenSetting = () => readNum("newlen", C.minSpan, 6000, 500);
+  const stepSetting = () => Number($("height").value) || 300;
+
+  function makeBoard(y, supports, ov) {
+    const s = [...supports].sort((a, b) => a - b);
+    return { id: nextId++, y, supports: s, x1: s[0] - ov, x2: last(s) + ov };
+  }
+
+  function initialState() {
+    boards = [makeBoard(0, [0, firstSetting()], ovSetting())];
+    brokenPipes = new Set();
+  }
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer = 0;
+  function toast(text) {
+    const t = $("toast");
+    t.textContent = text;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  /* ---------------- Геометрия ---------------- */
+  function mesh(geometry, material, x, y, z) {
+    const o = new THREE.Mesh(geometry, material);
+    o.position.set(x, y, z);
+    o.castShadow = true;
+    model.add(o);
+    return o;
+  }
+
+  function pipeV(x, y1, y2) {
+    if (y2 <= y1) return;
+    const o = mesh(G.pipe, pipeMat, x, (y1 + y2) / 2, 0);
+    o.scale.y = y2 - y1;
+  }
+
+  function wallMount(x, y) {
+    mesh(G.ball, fitMat, x, y, 0);
+    const len = -wallZ();
+    const tube = mesh(G.pipe, pipeMat, x, y, -len / 2);
+    tube.scale.y = len;
+    tube.rotation.x = Math.PI / 2;
+    const flange = mesh(G.flange, pipeMat, x, y, wallZ());
+    flange.rotation.x = Math.PI / 2;
+    return 1;
+  }
+
+  function supportUnderDeepShelf(x, y) {
+    const len = 200;
+    mesh(G.bracket, fitMat, x, y - 22, 0);
+    const tube = mesh(G.pipe, pipeMat, x, y - 22, -len / 2);
+    tube.scale.y = len;
+    tube.rotation.x = Math.PI / 2;
+    mesh(G.cube, fitMat, x, y - 22, -len);
+    return 1;
+  }
+
+  // Колонны опор: одна ось X, уровни соединены трубой, разрезы делят колонну на группы.
+  function computeGroups() {
+    const levelsByX = new Map();
+    for (const b of boards) {
+      for (const x of b.supports) {
+        if (!levelsByX.has(x)) levelsByX.set(x, new Set());
+        levelsByX.get(x).add(b.y);
+      }
+    }
+    const groups = [];
+    const segs = [];
+    for (const [x, set] of levelsByX) {
+      const levels = [...set].sort((a, b) => a - b);
+      let cur = [levels[0]];
+      for (let i = 0; i < levels.length - 1; i++) {
+        const y1 = levels[i], y2 = levels[i + 1];
+        const key = pipeKey(x, y1, y2);
+        const breakable = y2 - y1 > 2 * C.cap;
+        const broken = breakable && brokenPipes.has(key);
+        segs.push({ x, y1, y2, key, breakable, broken });
+        if (broken) { groups.push({ x, levels: cur }); cur = [y2]; }
+        else cur.push(y2);
+      }
+      groups.push({ x, levels: cur });
+    }
+    return { groups, segs };
+  }
+
+  function affectedBoards(g) {
+    return boards.filter(b => g.levels.includes(b.y) && b.supports.includes(g.x));
+  }
+
+  function bounds() {
+    if (!boards.length) return { minX: -300, maxX: 800, minY: -150, maxY: 300 };
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const b of boards) {
+      minX = Math.min(minX, b.x1); maxX = Math.max(maxX, b.x2);
+      minY = Math.min(minY, b.y); maxY = Math.max(maxY, b.y);
+    }
+    return { minX, maxX, minY: minY - C.cap - 60, maxY: maxY + C.cap + 60 };
+  }
+
+  function validateBoards(list) {
+    for (const b of list) {
+      const s = b.supports;
+      if (s.length < 2) return "у щита меньше двух опор";
+      for (let i = 0; i < s.length - 1; i++) {
+        const d = s[i + 1] - s[i];
+        if (d < C.minSpan) return `пролёт ${d} мм меньше ${C.minSpan} мм`;
+        if (d > C.maxSpan) return `пролёт ${d} мм больше ${C.maxSpan} мм`;
+      }
+      const l = s[0] - b.x1, r = b.x2 - last(s);
+      if (l < 0 || r < 0) return "опора выходит за край щита";
+      if (l > C.maxOverhang || r > C.maxOverhang) return `свес больше ${C.maxOverhang} мм`;
+    }
+    const byY = new Map();
+    for (const b of list) {
+      if (!byY.has(b.y)) byY.set(b.y, []);
+      byY.get(b.y).push(b);
+    }
+    for (const row of byY.values()) {
+      row.sort((a, b) => a.x1 - b.x1);
+      for (let i = 1; i < row.length; i++) {
+        if (row[i - 1].x2 > row[i].x1) return "щиты на одном уровне перекрываются";
+      }
+    }
+    return null;
+  }
+
+  function offs() {
+    const c = isCoarse();
+    return {
+      total: c ? -36 : -26,
+      span: c ? 30 : 22,
+      support: c ? 68 : 54,
+      del: c ? 110 : 88,
+      pipeDx: c ? -48 : -40,
+      edgeDx: c ? 36 : 28,
+      blueUp: c ? 82 : 62,
+      blueDown: c ? 150 : 120
+    };
+  }
+
+  /* ---------------- Перестройка ---------------- */
+  function rebuild(opts = {}) {
+    const keep = !!opts.keepButtons;
+    model.clear();
+    $("dimension-svg").replaceChildren();
+    $("dimension-layer").querySelectorAll(".dimension-label").forEach(n => n.remove());
+    dims = [];
+    if (!keep) {
+      $("buttons").replaceChildren();
+      buttons = [];
+    }
+
+    const { groups, segs } = computeGroups();
+    if (!drag) {
+      const valid = new Set(segs.filter(s => s.breakable).map(s => s.key));
+      brokenPipes = new Set([...brokenPipes].filter(k => valid.has(k)));
+    }
+
+    const d = depth(), wz = woodZ(), fz = frontZ(), o = offs(), half = C.thickness / 2;
+    let area = 0;
+    let tubes = 0;
+    let top = null;
+
+    for (const b of boards) {
+      const len = b.x2 - b.x1;
+      area += len * d / 1e6;
+      const m = mesh(G.box, woodMat, (b.x1 + b.x2) / 2, b.y, wz);
+      m.scale.set(len, C.thickness, d);
+      m.receiveShadow = true;
+
+      addDim(V(b.x1, b.y + half, fz), V(b.x2, b.y + half, fz), `${len} мм`, "total", o.total);
+      const s = b.supports, yb = b.y - half;
+      if (s[0] - b.x1 > 0)
+        addDim(V(b.x1, yb, fz), V(s[0], yb, fz), String(s[0] - b.x1), "overhang", o.span);
+      for (let i = 0; i < s.length - 1; i++)
+        addDim(V(s[i], yb, fz), V(s[i + 1], yb, fz), String(s[i + 1] - s[i]), "span", o.span);
+      if (b.x2 - last(s) > 0)
+        addDim(V(last(s), yb, fz), V(b.x2, yb, fz), String(b.x2 - last(s)), "overhang", o.span);
+
+      if (!top || b.y > top.y || (b.y === top.y && b.x2 > top.x2)) top = b;
+    }
+    if (top) {
+      addDim(V(top.x2 + 45, top.y + half, wz - d / 2), V(top.x2 + 45, top.y + half, wz + d / 2),
+        `${d} мм`, "depth", 0);
+    }
+
+    for (const g of groups) {
+      const lo = g.levels[0], hi = last(g.levels);
+      pipeV(g.x, lo - C.cap, lo);
+      tubes++;
+      tubes += wallMount(g.x, lo - C.cap);
+      for (let i = 0; i < g.levels.length - 1; i++) {
+        pipeV(g.x, g.levels[i], g.levels[i + 1]);
+        tubes++;
+      }
+      pipeV(g.x, hi, hi + C.cap);
+      tubes++;
+      tubes += wallMount(g.x, hi + C.cap);
+      for (const y of g.levels) {
+        mesh(G.ring, fitMat, g.x, y + 14, 0);
+        if ($("deep").checked) tubes += supportUnderDeepShelf(g.x, y);
+        else mesh(G.collar, fitMat, g.x, y - 19, 0);
+      }
+    }
+
+    const bb = bounds();
+    const cx = (bb.minX + bb.maxX) / 2, cy = (bb.minY + bb.maxY) / 2;
+    const wall = mesh(G.plane, wallMat, cx, cy, wallZ() - 7);
+    wall.scale.set(bb.maxX - bb.minX + 8000, bb.maxY - bb.minY + 5000, 1);
+    wall.castShadow = false;
+    wall.receiveShadow = true;
+
+    light.position.set(cx + 450, cy + 900, 900);
+    light.target.position.set(cx, cy, wallZ());
+    const sh = Math.max(bb.maxX - bb.minX, bb.maxY - bb.minY) / 2 + 700;
+    const sc = light.shadow.camera;
+    sc.left = -sh; sc.right = sh; sc.top = sh; sc.bottom = -sh;
+    sc.near = 10; sc.far = 5000;
+    sc.updateProjectionMatrix();
+
+    if (!keep) createControls(groups, segs);
+
+    const woodPrice = area * WOOD_RATE;
+    const pipePrice = tubes * PIPE_RATE;
+    $("area").textContent = area.toLocaleString("ru-RU", {
+      minimumFractionDigits: 2, maximumFractionDigits: 3
+    }) + " м²";
+    $("wood-price").textContent = money(woodPrice);
+    $("pipe-price").textContent = money(pipePrice);
+    $("pipe-count").textContent = String(tubes);
+    $("total").textContent = money(woodPrice + pipePrice);
+    $("mtotal").textContent = money(woodPrice + pipePrice);
+
+    $("empty").hidden = boards.length > 0;
+    const info = firstSpanInfo();
+    if (info && document.activeElement !== $("first")) $("first").value = info.b - info.a;
+
+    needsRender = true;
+  }
+
+  /* ---------------- Кнопки управления ---------------- */
+  function addButton(opt) {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "control " + opt.cls;
+    el.textContent = opt.text;
+    el.title = opt.title || "";
+    el.setAttribute("aria-label", opt.title || opt.text);
+    if (opt.onClick) {
+      el.addEventListener("click", e => {
+        e.stopPropagation();
+        if (drag) return;
+        opt.onClick(e);
+      });
+    }
+    $("buttons").appendChild(el);
+    const item = {
+      el, point: opt.point, dx: opt.dx || 0, dy: opt.dy || 0,
+      anchor: opt.anchor || null, minPx: opt.minPx || 0, fallbackY: opt.fallbackY || -1
+    };
+    buttons.push(item);
+    return item;
+  }
+
+  function createControls(groups, segs) {
+    const o = offs(), fz = frontZ(), step = stepSetting(), ov = ovSetting();
+    const blueSeen = new Set();
+
+    for (const b of boards) {
+      const s = b.supports;
+      for (let i = 0; i < s.length - 1; i++) {
+        const lo = s[i], hi = s[i + 1], cx = (lo + hi) / 2;
+        const id = b.id;
+
+        addButton({
+          point: V(cx, b.y, fz), text: "−", cls: "remove",
+          title: s.length > 2 ? "Удалить пролёт" : "Удалить полку",
+          onClick: () => removeSpan(id, i)
+        });
+
+        for (const sign of [1, -1]) {
+          const covered = boards.some(q =>
+            (sign > 0 ? q.y > b.y : q.y < b.y) &&
+            q.supports[0] < hi && last(q.supports) > lo);
+          if (covered) continue;
+          const key = `${b.y + sign * step}:${lo}:${hi}`;
+          if (blueSeen.has(key)) continue;
+          blueSeen.add(key);
+          addButton({
+            point: V(cx, b.y + sign * step * 0.55, fz),
+            anchor: V(cx, b.y, fz),
+            minPx: sign > 0 ? o.blueUp : o.blueDown,
+            fallbackY: -sign,
+            text: "+", cls: "vertical",
+            title: sign > 0 ? "Добавить полку сверху" : "Добавить полку снизу",
+            onClick: () => addLevel(id, i, sign)
+          });
+        }
+      }
+
+      for (const dir of [-1, 1]) {
+        const edge = dir > 0 ? b.x2 : b.x1;
+        const outer = dir > 0 ? last(s) : s[0];
+        let room = Infinity;
+        for (const q of boards) {
+          if (q === b || q.y !== b.y) continue;
+          if (dir > 0 && q.x1 >= b.x2) room = Math.min(room, q.x1 - 10 - b.x2);
+          if (dir < 0 && q.x2 <= b.x1) room = Math.min(room, b.x1 - (q.x2 + 10));
+        }
+        if (room <= 0 && Math.abs(edge - outer) <= ov) continue;
+        const id = b.id;
+        const item = addButton({
+          point: V(edge, b.y, fz), dx: dir * o.edgeDx, text: "+", cls: "horizontal",
+          title: "Нажмите — добавить секцию; потяните — изменить длину щита"
+        });
+        item.el.addEventListener("pointerdown", e => startEdgeDrag(e, id, dir, item));
+      }
+    }
+
+    for (const g of groups) {
+      const y = g.levels[0] - C.thickness / 2;
+      const item = addButton({
+        point: V(g.x, y, fz), dy: o.support, text: "⇔", cls: "support",
+        title: "Потяните, чтобы сдвинуть опору"
+      });
+      item.el.addEventListener("pointerdown", e => startSupportDrag(e, g, item));
+
+      const reason = deleteCheck(g);
+      addButton({
+        point: V(g.x, y, fz), dy: o.del, text: "×",
+        cls: "del-support" + (reason ? " disabled" : ""),
+        title: reason ? `Нельзя удалить: ${reason}` : "Удалить опору",
+        onClick: () => {
+          const r = deleteCheck(g);
+          if (r) toast("Нельзя удалить опору: " + r);
+          else deleteSupport(g);
+        }
+      });
+    }
+
+    for (const sg of segs) {
+      if (!sg.breakable) continue;
+      addButton({
+        point: V(sg.x, (sg.y1 + sg.y2) / 2, 0), dx: o.pipeDx,
+        text: sg.broken ? "↔" : "\u2702\uFE0E",
+        cls: sg.broken ? "pipe broken" : "pipe",
+        title: sg.broken ? "Соединить трубу" : "Разрезать трубу",
+        onClick: () => {
+          if (brokenPipes.has(sg.key)) brokenPipes.delete(sg.key);
+          else brokenPipes.add(sg.key);
+          rebuild();
+        }
+      });
+    }
+  }
+
+  /* ---------------- Размерные линии ---------------- */
+  function addDim(start, end, text, cls, dy) {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = $("dimension-svg");
+    const line = document.createElementNS(NS, "line");
+    const t1 = document.createElementNS(NS, "line");
+    const t2 = document.createElementNS(NS, "line");
+    line.setAttribute("class", "dim-line " + cls);
+    t1.setAttribute("class", "dim-tick " + cls);
+    t2.setAttribute("class", "dim-tick " + cls);
+    svg.append(line, t1, t2);
+    const label = document.createElement("div");
+    label.className = "dimension-label " + cls;
+    label.textContent = text;
+    $("dimension-layer").appendChild(label);
+    dims.push({
+      start, end, dy, line, t1, t2, label,
+      small: cls === "span" || cls === "overhang",
+      w: text.length * 6.6 + 12
+    });
+  }
+
+  /* ---------------- Действия ---------------- */
+  function firstSpanInfo() {
+    if (!boards.length) return null;
+    let a = Infinity;
+    for (const b of boards) a = Math.min(a, b.supports[0]);
+    const owner = boards.filter(b => b.supports[0] === a).sort((p, q) => p.y - q.y)[0];
+    return { a, b: owner.supports[1] };
+  }
+
+  function applyFirstSpan() {
+    const L = firstSetting();
+    $("first").value = L;
+    if (!boards.length) {
+      boards = [makeBoard(0, [0, L], ovSetting())];
+      rebuild();
+      fitView();
+      return;
+    }
+    const info = firstSpanInfo();
+    const delta = L - (info.b - info.a);
+    if (!delta) return;
+    const snapBoards = JSON.parse(JSON.stringify(boards));
+    const snapPipes = new Set(brokenPipes);
+    for (const b of boards) {
+      const s0 = b.supports[0], sN = last(b.supports);
+      if (s0 >= info.b) b.x1 += delta;
+      if (sN >= info.b) b.x2 += delta;
+      b.supports = b.supports.map(x => x >= info.b ? x + delta : x);
+    }
+    brokenPipes = new Set([...brokenPipes].map(k => {
+      const [x, y1, y2] = k.split(":").map(Number);
+      return pipeKey(x >= info.b ? x + delta : x, y1, y2);
+    }));
+    const err = validateBoards(boards);
+    if (err) {
+      boards = snapBoards;
+      brokenPipes = snapPipes;
+      toast("Нельзя изменить первый пролёт: " + err);
+    }
+    rebuild();
+  }
+
+  function applyOverhang() {
+    const ov = ovSetting();
+    $("overhang").value = ov;
+    for (const b of boards) {
+      b.x1 = b.supports[0] - ov;
+      b.x2 = last(b.supports) + ov;
+    }
+    const byY = new Map();
+    for (const b of boards) {
+      if (!byY.has(b.y)) byY.set(b.y, []);
+      byY.get(b.y).push(b);
+    }
+    for (const row of byY.values()) {
+      row.sort((p, q) => p.supports[0] - q.supports[0]);
+      for (let i = 1; i < row.length; i++) {
+        const p = row[i - 1], c = row[i];
+        if (p.x2 + 10 > c.x1) {
+          const gap = c.supports[0] - last(p.supports);
+          const o = Math.max(0, Math.min(ov, Math.floor((gap - 10) / 20) * 10));
+          p.x2 = last(p.supports) + o;
+          c.x1 = c.supports[0] - o;
+        }
+      }
+    }
+    rebuild();
+  }
+
+  function removeSpan(id, i) {
+    const b = boards.find(q => q.id === id);
+    if (!b) return;
+    const s = b.supports, ov = ovSetting();
+    if (s.length <= 2) {
+      boards = boards.filter(q => q !== b);
+    } else if (i === 0) {
+      b.supports = s.slice(1);
+      b.x1 = Math.max(b.x1, b.supports[0] - ov);
+    } else if (i === s.length - 2) {
+      b.supports = s.slice(0, -1);
+      b.x2 = Math.min(b.x2, last(b.supports) + ov);
+    } else {
+      const gap = s[i + 1] - s[i];
+      const o = Math.max(0, Math.min(ov, Math.floor((gap - 10) / 20) * 10));
+      const right = { id: nextId++, y: b.y, supports: s.slice(i + 1), x1: s[i + 1] - o, x2: b.x2 };
+      b.supports = s.slice(0, i + 1);
+      b.x2 = s[i] + o;
+      boards.push(right);
+    }
+    rebuild();
+  }
+
+  function addLevel(id, i, sign) {
+    const b = boards.find(q => q.id === id);
+    if (!b) return;
+    const y = b.y + sign * stepSetting();
+    const a = b.supports[i], c = b.supports[i + 1], ov = ovSetting();
+    const fresh = { id: nextId++, y, supports: [a, c], x1: a - ov, x2: c + ov };
+
+    const toMerge = boards.filter(q => q.y === y && q.x1 <= fresh.x2 + 10 && q.x2 >= fresh.x1 - 10);
+    let result = fresh;
+    if (toMerge.length) {
+      const existing = toMerge.flatMap(q => q.supports);
+      const set = new Set(existing);
+      for (const x of [a, c]) {
+        if (!existing.some(e => Math.abs(e - x) < C.minSpan)) set.add(x);
+      }
+      const all = [...set].sort((p, q) => p - q);
+      result = {
+        id: fresh.id, y, supports: all,
+        x1: Math.min(all[0] - ov, ...toMerge.map(q => q.x1)),
+        x2: Math.max(last(all) + ov, ...toMerge.map(q => q.x2))
+      };
+    }
+    const next = boards.filter(q => !toMerge.includes(q));
+    next.push(result);
+    const err = validateBoards(next);
+    if (err) { toast("Нельзя добавить полку: " + err); return; }
+    boards = next;
+    rebuild();
+  }
+
+  function extendByClick(id, dir) {
+    const b = boards.find(q => q.id === id);
+    if (!b) return;
+    const ov = ovSetting();
+    const s = b.supports;
+    const outer = dir > 0 ? last(s) : s[0];
+    let edgeLimit = dir > 0 ? Infinity : -Infinity;
+    for (const q of boards) {
+      if (q === b || q.y !== b.y) continue;
+      if (dir > 0 && q.x1 >= b.x2) edgeLimit = Math.min(edgeLimit, q.x1 - 10);
+      if (dir < 0 && q.x2 <= b.x1) edgeLimit = Math.max(edgeLimit, q.x2 + 10);
+    }
+    const maxLen = (edgeLimit - outer) * dir - ov;
+    let len = newLenSetting();
+    if (maxLen < len) {
+      if (maxLen < C.minSpan) { toast("Не хватает места: рядом соседняя полка"); return; }
+      len = Math.floor(maxLen / 10) * 10;
+      toast(`Секция уменьшена до ${len} мм — дальше соседняя полка`);
+    }
+    const k = Math.ceil(len / C.maxSpan);
+    let pts = [];
+    for (let n = 1; n <= k; n++) pts.push(r10(outer + dir * len * n / k));
+
+    // Притягивание к уже существующим осям опор (±30 мм), если ограничения соблюдаются.
+    const globals = boards.filter(q => q !== b).flatMap(q => q.supports);
+    const snapped = pts.map(p => {
+      let best = p, bd = 31;
+      for (const g of globals) {
+        const dd = Math.abs(g - p);
+        if (dd < bd) { bd = dd; best = g; }
+      }
+      return best;
+    });
+    const chain = [outer, ...snapped];
+    let ok = true;
+    for (let n = 0; n < chain.length - 1; n++) {
+      const sp = (chain[n + 1] - chain[n]) * dir;
+      if (sp < C.minSpan || sp > C.maxSpan) ok = false;
+    }
+    if ((edgeLimit - (last(snapped) + dir * ov)) * dir < 0) ok = false;
+    if (ok) pts = snapped;
+
+    const newOuter = last(pts);
+    b.supports = [...s, ...pts].sort((p, q) => p - q);
+    if (dir > 0) b.x2 = newOuter + ov; else b.x1 = newOuter - ov;
+    rebuild();
+  }
+
+  function extendSupports(base, outer, edge, dir, globals) {
+    const ov = ovSetting();
+    const out = base.slice();
+    let lastS = outer;
+    let guard = 0;
+    while ((edge - lastS) * dir > C.maxOverhang && guard++ < 300) {
+      let c = edge - dir * ov;
+      if ((c - lastS) * dir > C.maxSpan) c = lastS + dir * C.maxSpan;
+      if ((c - lastS) * dir < C.minSpan) c = lastS + dir * C.minSpan;
+      c = r10(c);
+      let best = null;
+      for (const g of globals) {
+        const dd = Math.abs(g - c);
+        const span = (g - lastS) * dir;
+        const rest = (edge - g) * dir;
+        if (dd <= 30 && span >= C.minSpan && span <= C.maxSpan &&
+            rest >= 0 && rest <= C.maxOverhang &&
+            (best === null || dd < Math.abs(best - c))) best = g;
+      }
+      if (best !== null) c = best;
+      out.push(c);
+      lastS = c;
+    }
+    return out.sort((p, q) => p - q);
+  }
+
+  function deleteCheck(g) {
+    const aff = affectedBoards(g);
+    for (const b of aff) {
+      const s = b.supports, i = s.indexOf(g.x);
+      if (s.length <= 2) return "у щита должно остаться минимум 2 опоры";
+      if (i === 0) {
+        const ov = s[1] - b.x1;
+        if (ov > C.maxOverhang) return `свес станет ${ov} мм (больше ${C.maxOverhang} мм)`;
+      } else if (i === s.length - 1) {
+        const ov = b.x2 - s[i - 1];
+        if (ov > C.maxOverhang) return `свес станет ${ov} мм (больше ${C.maxOverhang} мм)`;
+      } else {
+        const sp = s[i + 1] - s[i - 1];
+        if (sp > C.maxSpan) return `пролёт станет ${sp} мм (больше ${C.maxSpan} мм)`;
+      }
+    }
+    return null;
+  }
+
+  function deleteSupport(g) {
+    for (const b of affectedBoards(g)) b.supports = b.supports.filter(x => x !== g.x);
+    rebuild();
+  }
+
+  /* ---------------- Перетаскивание ---------------- */
+  const _v = new THREE.Vector3();
+  function project(point) {
+    _v.copy(point).project(camera);
+    return { x: (_v.x * 0.5 + 0.5) * innerWidth, y: (-_v.y * 0.5 + 0.5) * innerHeight, z: _v.z };
+  }
+
+  function screenAxis(p0) {
+    camera.updateMatrixWorld();
+    const a = project(p0);
+    const b = project(p0.clone().add(V(100, 0, 0)));
+    const vx = b.x - a.x, vy = b.y - a.y, len = Math.hypot(vx, vy);
+    return { ux: len ? vx / len : 1, uy: len ? vy / len : 0, ppm: Math.max(0.01, len / 100) };
+  }
+
+  function beginDrag(e, data) {
+    drag = Object.assign(data, {
+      pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false
+    });
+    try { data.item.el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    controls.enabled = false;
+  }
+
+  function startEdgeDrag(e, id, dir, item) {
+    if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const b = boards.find(q => q.id === id);
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const s = b.supports.slice();
+    const edge0 = dir > 0 ? b.x2 : b.x1;
+    const outer0 = dir > 0 ? last(s) : s[0];
+    const curOv = Math.abs(edge0 - outer0);
+    const minOv = Math.min(curOv, ovSetting());
+    let room = C.maxReach;
+    for (const q of boards) {
+      if (q === b || q.y !== b.y) continue;
+      if (dir > 0 && q.x1 >= b.x2) room = Math.min(room, q.x1 - 10 - edge0);
+      if (dir < 0 && q.x2 <= b.x1) room = Math.min(room, edge0 - (q.x2 + 10));
+    }
+    const globals = boards.filter(q => q !== b).flatMap(q => q.supports);
+    beginDrag(e, Object.assign({
+      type: "edge", id, dir, edge0, supports0: s, outer0,
+      minExt: -(curOv - minOv), maxExt: Math.max(0, room),
+      globals, item, lastEdge: edge0
+    }, screenAxis(V(edge0, b.y, frontZ()))));
+  }
+
+  function startSupportDrag(e, g, item) {
+    if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const aff = affectedBoards(g);
+    if (!aff.length) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const ov = ovSetting();
+    let lo = -Infinity, hi = Infinity;
+    for (const b of aff) {
+      const s = b.supports, i = s.indexOf(g.x);
+      if (i > 0) {
+        lo = Math.max(lo, s[i - 1] + C.minSpan);
+        hi = Math.min(hi, s[i - 1] + C.maxSpan);
+      } else {
+        lo = Math.max(lo, b.x1 + ov);
+        hi = Math.min(hi, b.x1 + C.maxOverhang);
+      }
+      if (i < s.length - 1) {
+        hi = Math.min(hi, s[i + 1] - C.minSpan);
+        lo = Math.max(lo, s[i + 1] - C.maxSpan);
+      } else {
+        hi = Math.min(hi, b.x2 - ov);
+        lo = Math.max(lo, b.x2 - C.maxOverhang);
+      }
+    }
+    lo = Math.min(lo, g.x);
+    hi = Math.max(hi, g.x);
+    beginDrag(e, Object.assign({
+      type: "support", x0: g.x, lo, hi, lastX: g.x, item,
+      refs: aff.map(b => ({ id: b.id, idx: b.supports.indexOf(g.x) }))
+    }, screenAxis(V(g.x, g.levels[0], frontZ()))));
+  }
+
+  function onPointerMove(e) {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    e.preventDefault();
+    const px = e.clientX - drag.startX, py = e.clientY - drag.startY;
+    if (!drag.moved) {
+      if (Math.hypot(px, py) < (e.pointerType === "mouse" ? 4 : 9)) return;
+      drag.moved = true;
+      drag.item.el.classList.add("active");
+      $("buttons").classList.add("dragging");
+    }
+    const along = (px * drag.ux + py * drag.uy) / drag.ppm;
+    if (drag.type === "edge") moveEdge(along, e);
+    else moveSupport(along, e);
+  }
+
+  function moveEdge(along, e) {
+    const b = boards.find(q => q.id === drag.id);
+    if (!b) return;
+    const ext = clamp(r10(along * drag.dir), drag.minExt, drag.maxExt);
+    const edge = drag.edge0 + drag.dir * ext;
+    if (edge !== drag.lastEdge) {
+      drag.lastEdge = edge;
+      b.supports = extendSupports(drag.supports0, drag.outer0, edge, drag.dir, drag.globals);
+      if (drag.dir > 0) b.x2 = edge; else b.x1 = edge;
+      drag.item.point.x = edge;
+      rebuild({ keepButtons: true });
+    }
+    const outer = drag.dir > 0 ? last(b.supports) : b.supports[0];
+    showDragLabel(`Щит ${b.x2 - b.x1} мм · свес ${Math.abs(edge - outer)} мм`, e);
+  }
+
+  function moveSupport(along, e) {
+    const nx = clamp(r10(drag.x0 + along), drag.lo, drag.hi);
+    if (nx !== drag.lastX) {
+      drag.lastX = nx;
+      for (const r of drag.refs) {
+        const b = boards.find(q => q.id === r.id);
+        if (b) b.supports[r.idx] = nx;
+      }
+      drag.item.point.x = nx;
+      rebuild({ keepButtons: true });
+    }
+    const r = drag.refs[0];
+    const b = boards.find(q => q.id === r.id);
+    if (!b) return;
+    const s = b.supports, i = r.idx;
+    const left = i > 0 ? `пролёт ${nx - s[i - 1]}` : `свес ${nx - b.x1}`;
+    const right = i < s.length - 1 ? `пролёт ${s[i + 1] - nx}` : `свес ${b.x2 - nx}`;
+    showDragLabel(`← ${left} мм | ${right} мм →`, e);
+  }
+
+  function onPointerUp(e) {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    const d = drag;
+    drag = null;
+    controls.enabled = true;
+    $("buttons").classList.remove("dragging");
+    d.item.el.classList.remove("active");
+    $("drag-label").style.display = "none";
+    if (!d.moved) {
+      if (d.type === "edge" && e.type === "pointerup") extendByClick(d.id, d.dir);
+      return;
+    }
+    rebuild();
+  }
+
+  function showDragLabel(text, e) {
+    const l = $("drag-label");
+    l.textContent = text;
+    l.style.display = "block";
+    const up = e.pointerType === "mouse" ? 38 : 76;
+    const half = Math.min(140, innerWidth / 2 - 10);
+    l.style.left = `${clamp(e.clientX, half, innerWidth - half)}px`;
+    l.style.top = `${Math.max(24, e.clientY - up)}px`;
+  }
+
+  addEventListener("pointermove", onPointerMove, { passive: false });
+  addEventListener("pointerup", onPointerUp);
+  addEventListener("pointercancel", onPointerUp);
+
+  /* ---------------- Наложение (кнопки и размеры) ---------------- */
+  function setLine(node, x1, y1, x2, y2) {
+    node.setAttribute("x1", x1);
+    node.setAttribute("y1", y1);
+    node.setAttribute("x2", x2);
+    node.setAttribute("y2", y2);
+  }
+
+  function updateOverlay() {
+    camera.updateMatrixWorld();
+    const W = innerWidth, H = innerHeight;
+
+    for (const it of buttons) {
+      const el = it.el;
+      let p = project(it.point);
+      let shown = visibleUI && p.z > -1 && p.z < 1;
+      if (shown && it.anchor) {
+        const a = project(it.anchor);
+        let vx = p.x - a.x, vy = p.y - a.y;
+        const len = Math.hypot(vx, vy);
+        if (len < it.minPx) {
+          if (len < 1) { vx = 0; vy = it.fallbackY; }
+          else { vx /= len; vy /= len; }
+          p = { x: a.x + vx * it.minPx, y: a.y + vy * it.minPx, z: p.z };
+        }
+      }
+      const x = p.x + it.dx, y = p.y + it.dy;
+      shown = shown && x > -40 && x < W + 40 && y > -40 && y < H + 40;
+      el.style.display = shown ? "grid" : "none";
+      if (shown) el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+    }
+
+    for (const d of dims) {
+      const a = project(d.start), b = project(d.end);
+      const shown = visibleUI && a.z > -1 && a.z < 1 && b.z > -1 && b.z < 1;
+      d.line.style.display = d.t1.style.display = d.t2.style.display = shown ? "" : "none";
+      if (!shown) { d.label.style.display = "none"; continue; }
+      const ay = a.y + d.dy, by = b.y + d.dy;
+      setLine(d.line, a.x, ay, b.x, by);
+      const dx = b.x - a.x, dy = by - ay;
+      const mag = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / mag * 5, ny = dx / mag * 5;
+      setLine(d.t1, a.x - nx, ay - ny, a.x + nx, ay + ny);
+      setLine(d.t2, b.x - nx, by - ny, b.x + nx, by + ny);
+      const labelShown = !d.small || mag > d.w + 4;
+      d.label.style.display = labelShown ? "block" : "none";
+      if (labelShown) {
+        d.label.style.transform =
+          `translate(${(a.x + b.x) / 2}px, ${(ay + by) / 2}px) translate(-50%, -50%)`;
+      }
+    }
+  }
+
+  /* ---------------- Камера ---------------- */
+  function fitView() {
+    const bb = bounds();
+    const w = bb.maxX - bb.minX + 400;
+    const h = bb.maxY - bb.minY + 420;
+    const cx = (bb.minX + bb.maxX) / 2, cy = (bb.minY + bb.maxY) / 2;
+    const t = Math.tan(camera.fov * Math.PI / 360);
+    let usableW = innerWidth, usableH = innerHeight;
+    if (isMobile()) usableH = Math.max(200, innerHeight - 150);
+    else usableW = Math.max(300, innerWidth - 660);
+    const distH = (h / 2) / t * (innerHeight / usableH);
+    const distW = (w / 2) / (t * camera.aspect) * (innerWidth / usableW);
+    const dist = clamp(Math.max(distH, distW, 900), controls.minDistance, controls.maxDistance);
+    controls.target.set(cx, cy, -60);
+    const dir = V(0.3, 0.22, 1).normalize();
+    camera.position.copy(controls.target).addScaledVector(dir, dist);
+    controls.update();
+    needsRender = true;
+  }
+
+  /* ---------------- Интерфейс ---------------- */
+  function setSheet(name) {
+    openSheet = name;
+    $("settings").classList.toggle("open", name === "settings");
+    $("estimate").classList.toggle("open", name === "estimate");
+    $("tab-settings").classList.toggle("active", name === "settings");
+    $("tab-estimate").classList.toggle("active", name === "estimate");
+  }
+  $("tab-settings").addEventListener("click", () =>
+    setSheet(openSheet === "settings" ? null : "settings"));
+  $("tab-estimate").addEventListener("click", () =>
+    setSheet(openSheet === "estimate" ? null : "estimate"));
+  document.querySelectorAll(".sheet-close").forEach(btn =>
+    btn.addEventListener("click", () => setSheet(null)));
+  renderer.domElement.addEventListener("pointerdown", () => {
+    if (openSheet && isMobile()) setSheet(null);
+  });
+
+  document.querySelectorAll(".stepper button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = $(btn.dataset.for);
+      const v = Number(input.value) || 0;
+      input.value = clamp(v + Number(btn.dataset.step), Number(input.min), Number(input.max));
+      input.dispatchEvent(new Event("change"));
+    });
+  });
+  document.querySelectorAll('input[type="number"]').forEach(inp => {
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
+  });
+
+  $("deep").addEventListener("change", rebuild);
+  $("height").addEventListener("change", rebuild);
+  $("first").addEventListener("change", applyFirstSpan);
+  $("overhang").addEventListener("change", applyOverhang);
+  $("newlen").addEventListener("change", () => { $("newlen").value = newLenSetting(); });
+
+  $("reset").addEventListener("click", () => {
+    $("first").value = 500;
+    initialState();
+    rebuild();
+    fitView();
+    if (isMobile()) setSheet(null);
+  });
+  $("empty-add").addEventListener("click", () => {
+    initialState();
+    rebuild();
+    fitView();
+  });
+
+  $("toggle").addEventListener("click", () => {
+    visibleUI = !visibleUI;
+    document.body.classList.toggle("ui-hidden", !visibleUI);
+    if (!isMobile()) $("settings").style.display = visibleUI ? "" : "none";
+    $("toggle").textContent = visibleUI ? "◉" : "○";
+    const t = visibleUI ? "Скрыть размеры и управление" : "Показать размеры и управление";
+    $("toggle").title = t;
+    $("toggle").setAttribute("aria-label", t);
+    needsRender = true;
+  });
+  $("fit").addEventListener("click", fitView);
+
+  mqMobile.addEventListener && mqMobile.addEventListener("change", () => {
+    $("settings").style.display = (!isMobile() && !visibleUI) ? "none" : "";
+    setSheet(null);
+    needsRender = true;
+  });
+
+  $("buttons").addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("gesturestart", e => e.preventDefault());
+
+  addEventListener("resize", () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    needsRender = true;
+  });
+
+  controls.addEventListener("change", () => { needsRender = true; });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (needsRender) {
+      needsRender = false;
+      renderer.render(scene, camera);
+      updateOverlay();
+    }
+  }
+
+  initialState();
+  rebuild();
+  fitView();
+  animate();
+  if (isCoarse()) setTimeout(() => toast("Один палец — вращение, два — масштаб и сдвиг"), 700);
+})();
+</script>
+</body>
+</html>
