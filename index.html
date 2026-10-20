@@ -8,7 +8,7 @@
 <title>3D-конструктор стеллажей</title>
 <style>
   :root {
-    --bar-h: 64px;
+    --bar-h: 60px;
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-l: env(safe-area-inset-left, 0px);
@@ -33,11 +33,11 @@
   }
   #settings { left: 18px; }
   #estimate { right: 18px; }
-  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
   h2 { margin: 0; font-size: 18px; }
   .sheet-close {
-    display: none; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%;
-    background: #eef2f3; color: #37474f; font-size: 16px; cursor: pointer; flex: 0 0 auto;
+    display: none; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%;
+    background: #eef2f3; color: #37474f; font-size: 15px; cursor: pointer; flex: 0 0 auto;
   }
   label { display: block; margin: 12px 0 6px; }
   input, select { -webkit-user-select: auto; user-select: auto; }
@@ -53,8 +53,8 @@
   .stepper { display: flex; gap: 6px; }
   .stepper input { flex: 1; min-width: 0; text-align: center; }
   .stepper button {
-    flex: 0 0 40px; border: 1px solid #cbd2d6; border-radius: 8px; background: #f3f6f7;
-    color: #37474f; font-size: 20px; line-height: 1; cursor: pointer; touch-action: manipulation;
+    flex: 0 0 38px; border: 1px solid #cbd2d6; border-radius: 8px; background: #f3f6f7;
+    color: #37474f; font-size: 19px; line-height: 1; cursor: pointer; touch-action: manipulation;
   }
   .stepper button:active { background: #dde4e7; }
   .muted { color: #66757b; font-size: 12px; line-height: 1.45; }
@@ -76,130 +76,140 @@
   }
   #total { color: #168050; white-space: nowrap; }
 
-  .fab {
-    position: absolute; z-index: 30; display: grid; place-items: center;
-    width: 44px; height: 44px; border: 1px solid #ccc; border-radius: 50%;
-    background: white; color: #37474f; box-shadow: 0 3px 12px #0003;
-    cursor: pointer; font-size: 19px; touch-action: manipulation;
+  #fabs {
+    position: absolute; z-index: 30; top: 18px; right: 322px;
+    display: flex; flex-direction: column; gap: 8px;
   }
-  #toggle { top: 18px; right: 326px; }
-  #fit { top: 72px; right: 326px; }
-
-  #mobilebar { display: none; }
+  .fab {
+    width: 44px; height: 44px; border: 1px solid #ccc; border-radius: 50%;
+    background: white; box-shadow: 0 3px 12px #0003; cursor: pointer;
+    font-size: 19px; color: #263238; touch-action: manipulation;
+  }
 
   #buttons, #dimension-layer { position: absolute; inset: 0; pointer-events: none; }
   #buttons { z-index: 5; }
   #dimension-layer { z-index: 4; overflow: hidden; }
   #dimension-svg { width: 100%; height: 100%; overflow: visible; }
+
   .control {
-    position: absolute; left: 0; top: 0; display: grid; place-items: center;
-    width: 28px; height: 28px; padding: 0; border: 2px solid white;
-    border-radius: 50%; color: white; font: bold 18px/1 Arial, sans-serif;
-    box-shadow: 0 2px 7px #0007; cursor: pointer; pointer-events: auto;
-    touch-action: none; user-select: none; -webkit-user-select: none;
+    --s: 28px;
+    position: absolute; display: grid; place-items: center;
+    width: var(--s); height: var(--s); padding: 0; border: 2px solid white;
+    border-radius: 50%; color: white; font-family: inherit;
+    font-size: calc(var(--s) * .62); font-weight: bold; line-height: 1;
+    box-shadow: 0 2px 7px #0007; transform: translate(-50%, -50%);
+    cursor: pointer; pointer-events: auto; touch-action: none; user-select: none;
   }
+  .control::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
+  .control.small { --s: 22px; font-size: calc(var(--s) * .6); }
   .horizontal { background: #24a663; cursor: ew-resize; }
   .vertical { background: #348dca; }
   .remove { background: #dc5249; }
-  .support { background: #ef8a2c; font-size: 15px; cursor: ew-resize; }
-  .del-support { background: #b8322a; width: 22px; height: 22px; font-size: 14px; }
-  .control.disabled { background: #9aa3a7; opacity: .65; cursor: not-allowed; }
-  .pipe { background: #e4b528; color: #222; font-size: 14px; }
+  .support { background: #ef8a2c; cursor: ew-resize; }
+  .del-support { background: #b8322a; }
+  .control.disabled { background: #9aa3a7; opacity: .6; cursor: not-allowed; }
+  .pipe { background: #e4b528; color: #222; }
   .pipe.broken { background: #8852b4; color: white; }
-  .control.active { box-shadow: 0 0 0 4px #ffffffaa, 0 2px 10px #0008; }
-  @media (hover: hover) { .control:hover { filter: brightness(.88); } }
-  #buttons.dragging .control:not(.active) { display: none !important; }
+  .control:hover { filter: brightness(.88); }
+  #buttons.dragging .control:not(.active) { opacity: 0; pointer-events: none; }
+
+  @media (pointer: coarse) {
+    .control { --s: 30px; }
+    .control.small { --s: 24px; }
+  }
+  @media (max-width: 600px) {
+    .control { --s: 22px; border-width: 1.5px; box-shadow: 0 1px 4px #0006; }
+    .control.small { --s: 18px; }
+    .control::after { inset: -7px; }
+    .control.disabled { opacity: .42; }
+  }
 
   .dimension-label, #drag-label {
-    position: absolute; left: 0; top: 0; padding: 3px 6px; border-radius: 4px;
+    position: absolute; padding: 2px 5px; border-radius: 4px;
     background: rgba(255,255,255,.94); color: #213d4b; white-space: nowrap;
-    font-size: 12px; font-weight: 600; box-shadow: 0 1px 4px #0002;
+    font-size: 12px; font-weight: 600; transform: translate(-50%,-50%);
+    box-shadow: 0 1px 4px #0002; pointer-events: none;
   }
   .dimension-label.span { font-size: 11px; font-weight: 500; color: #4f6169; padding: 1px 4px; }
-  .dimension-label.overhang { font-size: 11px; font-weight: 500; color: #9a6a2f; padding: 1px 4px; }
-  .dimension-label.depth { font-size: 11px; font-weight: 500; }
+  .dimension-label.ovh { font-size: 11px; font-weight: 500; color: #9a6a2f; padding: 1px 4px; }
+  .dimension-label.level { color: #5a3d8a; }
+  .dimension-label.total { color: #0f5132; background: #eaf6ef; }
+  .dimension-label.side-left { transform: translate(calc(-100% - 6px), -50%); }
+  .dimension-label.side-right { transform: translate(6px, -50%); }
   #drag-label {
-    z-index: 20; display: none; color: #12683d; pointer-events: none;
-    font-size: 13px; padding: 5px 9px; transform: translate(-50%, -50%);
+    z-index: 20; display: none; color: #12683d; font-size: 13px; padding: 4px 8px;
   }
   .dim-line { stroke: #245971; stroke-width: 1.5; fill: none; }
   .dim-tick { stroke: #245971; stroke-width: 1.5; }
-  .dim-line.span, .dim-tick.span { stroke: #7c929c; stroke-width: 1; }
-  .dim-line.overhang, .dim-tick.overhang { stroke: #b08a55; stroke-width: 1; }
-  .dim-line.overhang { stroke-dasharray: 4 3; }
+  .dim-line.span, .dim-tick.span { stroke: #7c929b; stroke-width: 1; }
+  .dim-line.ovh, .dim-tick.ovh { stroke: #b08a5a; stroke-width: 1; }
+  .dim-line.level, .dim-tick.level { stroke: #6a4c9c; stroke-width: 1.3; }
+  .dim-line.total, .dim-tick.total { stroke: #168050; stroke-width: 1.6; }
+  .dim-ext { stroke: #6a4c9c; stroke-width: 1; stroke-dasharray: 3 3; opacity: .55; fill: none; }
+  .dim-ext.total { stroke: #168050; }
 
   #toast {
     position: fixed; z-index: 60; left: 50%; top: calc(14px + var(--safe-t));
     max-width: min(92vw, 460px); padding: 10px 14px; border-radius: 10px;
-    background: #263238; color: white; font-size: 13px; text-align: center;
-    box-shadow: 0 6px 20px #0004; pointer-events: none;
-    transform: translate(-50%, -160%); transition: transform .25s ease;
+    background: #263238; color: white; font-size: 13px; line-height: 1.4;
+    box-shadow: 0 6px 20px #0004; transform: translate(-50%, -150%);
+    opacity: 0; transition: transform .25s, opacity .25s; pointer-events: none; text-align: center;
   }
-  #toast.show { transform: translate(-50%, 0); }
+  #toast.show { transform: translate(-50%, 0); opacity: 1; }
 
-  #empty {
-    position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    padding: 18px 22px; border-radius: 14px; background: rgba(255,255,255,.96);
-    box-shadow: 0 8px 28px #0002; text-align: center;
+  #mobile-bar {
+    display: none; position: fixed; z-index: 45; left: 0; right: 0; bottom: 0;
+    height: calc(var(--bar-h) + var(--safe-b)); gap: 8px;
+    padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l));
+    background: rgba(255,255,255,.97); box-shadow: 0 -2px 12px #0002;
   }
-  #empty[hidden] { display: none; }
-  #empty p { margin: 0 0 4px; font-weight: 600; }
-
-  @media (pointer: coarse) {
-    .control { width: 40px; height: 40px; font-size: 22px; }
-    .support { font-size: 18px; }
-    .del-support { width: 32px; height: 32px; font-size: 17px; }
-    .pipe { font-size: 17px; }
-    #drag-label { font-size: 14px; }
+  #mobile-bar button {
+    flex: 1; border: 0; border-radius: 10px; background: #eef2f3; color: #263238;
+    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; touch-action: manipulation;
   }
+  #mobile-bar button.active { background: #37474f; color: white; }
+  #mobile-bar button.active #bar-total { color: #9be3bd; }
+  #bar-total { color: #168050; }
 
-  /* ---------- Телефоны и небольшие планшеты ---------- */
   @media (max-width: 900px) {
     .panel {
-      position: fixed; z-index: 40; top: auto; width: auto;
-      left: calc(8px + var(--safe-l)); right: calc(8px + var(--safe-r));
-      bottom: calc(var(--bar-h) + var(--safe-b) + 8px);
-      max-height: min(64vh, 560px); padding: 14px 16px 18px; border-radius: 18px;
-      box-shadow: 0 -6px 30px #0003;
-      transform: translateY(calc(100% + var(--bar-h) + 60px)); visibility: hidden;
-      transition: transform .25s ease, visibility 0s linear .25s;
+      position: fixed; z-index: 40; top: auto; left: 0; right: 0; width: auto;
+      bottom: calc(var(--bar-h) + var(--safe-b));
+      max-height: 62vh; border-radius: 16px 16px 0 0;
+      padding: 14px calc(16px + var(--safe-r)) 16px calc(16px + var(--safe-l));
+      box-shadow: 0 -6px 24px #0003;
+      transform: translateY(calc(100% + var(--bar-h) + var(--safe-b) + 20px));
+      transition: transform .25s ease;
     }
-    .panel.open { transform: none; visibility: visible; transition: transform .25s ease; }
+    #settings, #estimate { left: 0; right: 0; }
+    .panel.open { transform: none; }
     .sheet-close { display: grid; }
-    h2 { font-size: 17px; }
-    input[type="number"], select { font-size: 16px; padding: 11px; }
-    .stepper button { flex-basis: 48px; font-size: 22px; }
-    .reset { padding: 13px; font-size: 15px; }
-    .estimate-row { font-size: 15px; }
-
-    #toggle { top: calc(12px + var(--safe-t)); right: calc(12px + var(--safe-r)); }
-    #fit { top: calc(64px + var(--safe-t)); right: calc(12px + var(--safe-r)); }
-    #toast { max-width: calc(100vw - 140px); }
-
-    #mobilebar {
-      display: flex; position: fixed; z-index: 45; left: 0; right: 0; bottom: 0;
-      height: calc(var(--bar-h) + var(--safe-b)); gap: 8px;
-      padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l));
-      background: rgba(255,255,255,.97); box-shadow: 0 -4px 20px #0002;
-    }
-    .tab {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-      border: 0; border-radius: 12px; background: #eef2f3; color: #263238;
-      font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; touch-action: manipulation;
-    }
-    .tab.active { background: #37474f; color: white; }
-    .tab .tab-cap { font-weight: 500; opacity: .75; }
-    .tab strong { color: #168050; font-size: 17px; white-space: nowrap; }
-    .tab.active strong { color: #9ff0c4; }
+    #mobile-bar { display: flex; }
+    #fabs { top: calc(10px + var(--safe-t)); right: calc(10px + var(--safe-r)); }
+    .fab { width: 40px; height: 40px; font-size: 17px; }
+    h2 { font-size: 16px; }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    input[type="number"], select { font-size: 16px; }
+    .dimension-label { font-size: 11px; }
+  }
+  @media (max-width: 600px) {
+    .dimension-label { font-size: 10px; padding: 1px 3px; }
+    .dimension-label.span, .dimension-label.ovh { font-size: 9.5px; padding: 0 2px; }
+    .dim-line, .dim-tick { stroke-width: 1.2; }
+  }
+  @media (max-width: 360px) {
+    .settings-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 900px) and (orientation: landscape) and (max-height: 520px) {
-    :root { --bar-h: 52px; }
-    .panel {
-      right: auto; width: 330px; top: calc(8px + var(--safe-t)); max-height: none;
-      transform: translateX(calc(-100% - 40px));
+    :root { --bar-h: 48px; }
+    #settings, #estimate {
+      top: calc(8px + var(--safe-t)); bottom: calc(var(--bar-h) + var(--safe-b) + 6px);
+      width: 330px; max-height: none; border-radius: 14px;
     }
-    .panel.open { transform: none; }
-    #empty { top: 42%; }
+    #settings { left: calc(8px + var(--safe-l)); right: auto; transform: translateX(calc(-100% - 40px)); }
+    #estimate { right: calc(8px + var(--safe-r)); left: auto; transform: translateX(calc(100% + 40px)); }
+    #settings.open, #estimate.open { transform: none; }
+    #mobile-bar { padding-top: 5px; padding-bottom: calc(5px + var(--safe-b)); }
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -212,116 +222,136 @@
 <div id="drag-label"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<div id="empty" hidden>
-  <p>Полок нет</p>
-  <button id="empty-add" class="reset" type="button">Добавить полку</button>
-</div>
-
-<aside id="settings" class="panel" aria-label="Настройки стеллажа">
+<div id="settings" class="panel">
   <div class="panel-head">
     <h2>Настройки стеллажа</h2>
-    <button class="sheet-close" type="button" aria-label="Закрыть">✕</button>
+    <button type="button" class="sheet-close" data-close aria-label="Закрыть">✕</button>
   </div>
-  <label class="check"><input id="deep" type="checkbox"><span>Глубокие полки — 400 мм</span></label>
-
-  <label for="first">Длина первого пролёта, мм</label>
-  <div class="stepper">
-    <button type="button" data-for="first" data-step="-50" aria-label="Уменьшить">−</button>
-    <input id="first" type="number" inputmode="numeric" min="200" max="1500" step="10" value="500">
-    <button type="button" data-for="first" data-step="50" aria-label="Увеличить">+</button>
+  <label class="check"><input id="deep" type="checkbox"> Глубокие полки — 400 мм</label>
+  <div class="settings-grid">
+    <div>
+      <label for="first">Длина первого пролёта, мм</label>
+      <div class="stepper">
+        <button type="button" data-for="first" data-step="-10" aria-label="Меньше">−</button>
+        <input id="first" type="number" inputmode="numeric" min="200" max="1500" step="10" value="500">
+        <button type="button" data-for="first" data-step="10" aria-label="Больше">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="overhang">Свес щита за крайнюю опору, мм</label>
+      <div class="stepper">
+        <button type="button" data-for="overhang" data-step="-10" aria-label="Меньше">−</button>
+        <input id="overhang" type="number" inputmode="numeric" min="100" max="500" step="10" value="200">
+        <button type="button" data-for="overhang" data-step="10" aria-label="Больше">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="length">Длина новой секции, мм</label>
+      <div class="stepper">
+        <button type="button" data-for="length" data-step="-100" aria-label="Меньше">−</button>
+        <input id="length" type="number" inputmode="numeric" min="200" max="6000" step="10" value="500">
+        <button type="button" data-for="length" data-step="100" aria-label="Больше">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="height">Шаг по высоте, мм</label>
+      <select id="height">
+        <option>150</option><option>200</option><option selected>300</option>
+        <option>400</option><option>500</option>
+      </select>
+    </div>
   </div>
-
-  <label for="overhang">Свес щита за крайнюю опору, мм</label>
-  <div class="stepper">
-    <button type="button" data-for="overhang" data-step="-10" aria-label="Уменьшить">−</button>
-    <input id="overhang" type="number" inputmode="numeric" min="100" max="500" step="10" value="200">
-    <button type="button" data-for="overhang" data-step="10" aria-label="Увеличить">+</button>
-  </div>
-
-  <label for="newlen">Длина новой секции, мм</label>
-  <div class="stepper">
-    <button type="button" data-for="newlen" data-step="-100" aria-label="Уменьшить">−</button>
-    <input id="newlen" type="number" inputmode="numeric" min="200" max="6000" step="10" value="500">
-    <button type="button" data-for="newlen" data-step="100" aria-label="Увеличить">+</button>
-  </div>
-
-  <label for="height">Шаг по высоте, мм</label>
-  <select id="height">
-    <option>150</option><option>200</option><option selected>300</option>
-    <option>400</option><option>500</option>
-  </select>
-
-  <button id="reset" class="reset" type="button">Сбросить всё</button>
-
+  <button id="reset" type="button" class="reset">Сбросить всё</button>
   <details class="help">
     <summary>Как пользоваться</summary>
     <ul class="muted">
-      <li>Зелёный «+»: нажмите — добавится секция; потяните — щит удлиняется или укорачивается. При свесе больше 500 мм появляется новая опора.</li>
-      <li>Синий «+» добавляет полку сверху или снизу.</li>
+      <li>Зелёный «+»: нажмите — добавится секция; потяните — меняется длина щита. Опора появляется, когда свес превысит 500 мм.</li>
+      <li>Синий «+» добавляет полку над или под свободным пролётом.</li>
       <li>Красный «−» удаляет пролёт.</li>
-      <li>Оранжевая «⇔» двигает опору: пролёт 200–1500 мм, свес — от значения в настройках до 500 мм. «×» удаляет опору.</li>
-      <li>Жёлтая «✂» разрезает трубу, фиолетовая «↔» соединяет.</li>
-      <li>Под щитом: серые числа — пролёты, коричневые — свесы.</li>
-      <li>Один палец — вращение, два пальца — масштаб и сдвиг. «⤢» — показать весь стеллаж.</li>
+      <li>Оранжевый «⇔» двигает опору (пролёт 200–1500 мм, свес от заданного до 500 мм), «×» удаляет опору.</li>
+      <li>«✂» разрезает трубу, «↔» соединяет обратно.</li>
+      <li>Слева — расстояния между полками (верх–верх) и общая высота, снизу — общая ширина.</li>
+      <li>«⤢» — показать весь стеллаж, «◉» — скрыть размеры и кнопки.</li>
     </ul>
   </details>
-</aside>
+</div>
 
-<aside id="estimate" class="panel" aria-label="Расчёт стоимости">
+<div id="estimate" class="panel">
   <div class="panel-head">
     <h2>Расчёт стоимости</h2>
-    <button class="sheet-close" type="button" aria-label="Закрыть">✕</button>
+    <button type="button" class="sheet-close" data-close aria-label="Закрыть">✕</button>
   </div>
   <div class="estimate-row"><span>Мебельный щит</span><strong id="wood-price">0 ₽</strong></div>
   <div class="estimate-row"><span>Площадь щита</span><strong id="area">0 м²</strong></div>
   <div class="estimate-row"><span>Трубки</span><strong id="pipe-price">0 ₽</strong></div>
   <div class="estimate-row"><span>Количество трубок</span><strong id="pipe-count">0</strong></div>
+  <div class="estimate-row"><span>Габарит Ш × В</span><strong id="overall">—</strong></div>
   <div class="total"><span>Итого</span><span id="total">0 ₽</span></div>
   <p class="muted">Щит — 30 000 ₽/м²; каждая отдельная трубка — 1 000 ₽.
     Фурнитура, крепёж, обработка и монтаж не включены.</p>
-</aside>
+</div>
 
-<button id="toggle" class="fab" type="button" title="Скрыть размеры и управление" aria-label="Скрыть размеры и управление">◉</button>
-<button id="fit" class="fab" type="button" title="Показать весь стеллаж" aria-label="Показать весь стеллаж">⤢</button>
+<div id="fabs">
+  <button id="toggle" type="button" class="fab" title="Скрыть размеры и управление" aria-label="Скрыть размеры и управление">◉</button>
+  <button id="fit" type="button" class="fab" title="Показать весь стеллаж" aria-label="Показать весь стеллаж">⤢</button>
+</div>
 
-<nav id="mobilebar">
-  <button id="tab-settings" class="tab" type="button">⚙ <span>Настройки</span></button>
-  <button id="tab-estimate" class="tab" type="button"><span class="tab-cap">Итого</span><strong id="mtotal">0 ₽</strong></button>
-</nav>
+<div id="mobile-bar">
+  <button id="btn-settings" type="button">Настройки</button>
+  <button id="btn-estimate" type="button">Итого: <span id="bar-total">0 ₽</span></button>
+</div>
 
 <script>
 (() => {
   "use strict";
 
   const $ = id => document.getElementById(id);
-  const C = {
-    minSpan: 200,
-    maxSpan: 1500,
-    maxOverhang: 500,
-    thickness: 20,
-    cap: 80,
-    pipeRadius: 10,
-    maxReach: 30000
+  const MM = {
+    minSpan: 200, maxSpan: 1500, maxOverhang: 500, minOverhang: 100,
+    maxFirst: 1500, maxSection: 6000,
+    thickness: 20, cap: 80, pipeR: 10
   };
   const WOOD_RATE = 30000;
   const PIPE_RATE = 1000;
   const money = n => new Intl.NumberFormat("ru-RU").format(Math.round(n)) + " ₽";
   const r10 = n => Math.round(n / 10) * 10;
-  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const last = arr => arr[arr.length - 1];
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
-  const mqMobile = window.matchMedia("(max-width: 900px)");
-  const mqCoarse = window.matchMedia("(pointer: coarse)");
-  const isMobile = () => mqMobile.matches;
-  const isCoarse = () => mqCoarse.matches;
+  const byNum = (a, b) => a - b;
 
-  /* ---------------- Сцена ---------------- */
+  const mqPhone = matchMedia("(max-width: 600px)");
+  const mqMobile = matchMedia("(max-width: 900px)");
+  const mqCoarse = matchMedia("(pointer: coarse)");
+  function onMq(mq, fn) {
+    if (mq.addEventListener) mq.addEventListener("change", fn); else mq.addListener(fn);
+  }
+  function sizes() {
+    if (mqPhone.matches) return { main: 22, small: 18 };
+    if (mqCoarse.matches) return { main: 30, small: 24 };
+    return { main: 28, small: 22 };
+  }
+  const isCompact = () => mqPhone.matches;
+  const fmt = n => isCompact() ? String(n) : `${n} мм`;
+
+  function readNum(id, def, min, max) {
+    const raw = $(id).value;
+    const v = Number(raw);
+    return r10(clamp(raw !== "" && Number.isFinite(v) ? v : def, min, max));
+  }
+  const ovSetting = () => readNum("overhang", 200, MM.minOverhang, MM.maxOverhang);
+  const sectionLen = () => readNum("length", 500, MM.minSpan, MM.maxSection);
+  const firstLen = () => readNum("first", 500, MM.minSpan, MM.maxFirst);
+  const heightStep = () => Number($("height").value) || 300;
+
+  // ---------- Сцена ----------
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#dedede");
-  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 10, 40000);
+  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 30000);
   camera.position.set(650, 480, 1750);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, isCoarse() ? 1.75 : 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mqMobile.matches ? 1.75 : 2));
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -329,290 +359,483 @@
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.12;
-  controls.minDistance = 300;
-  controls.maxDistance = 15000;
+  controls.dampingFactor = .12;
+  controls.screenSpacePanning = true;
+  controls.minDistance = 200;
+  controls.maxDistance = 20000;
   controls.target.set(250, 0, -80);
   controls.update();
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const light = new THREE.DirectionalLight(0xffffff, 0.75);
+  scene.add(new THREE.AmbientLight(0xffffff, .7));
+  const light = new THREE.DirectionalLight(0xffffff, .75);
+  light.position.set(450, 900, 900);
   light.castShadow = true;
-  const shadowSize = isCoarse() ? 1024 : 2048;
+  const shadowSize = mqMobile.matches ? 1024 : 2048;
   light.shadow.mapSize.set(shadowSize, shadowSize);
-  light.shadow.bias = -0.0008;
-  scene.add(light, light.target);
+  light.shadow.bias = -0.0005;
+  scene.add(light);
+  scene.add(light.target);
 
-  const woodMat = new THREE.MeshStandardMaterial({ color: "#a6753e", roughness: 0.82 });
-  const pipeMat = new THREE.MeshStandardMaterial({ color: "#202528", metalness: 0.25, roughness: 0.65 });
-  const fitMat = new THREE.MeshStandardMaterial({ color: "#bf9d5b", metalness: 0.7, roughness: 0.3 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: "#a6753e", roughness: .82 });
+  const pipeMat = new THREE.MeshStandardMaterial({ color: "#202528", metalness: .25, roughness: .65 });
+  const fitMat = new THREE.MeshStandardMaterial({ color: "#bf9d5b", metalness: .7, roughness: .3 });
   const wallMat = new THREE.MeshStandardMaterial({ color: "#ececec" });
 
-  // Общие геометрии: переиспользуются при каждой перестройке.
+  // Общие единичные геометрии: размеры задаются масштабом меша.
   const G = {
     box: new THREE.BoxGeometry(1, 1, 1),
-    pipe: new THREE.CylinderGeometry(C.pipeRadius, C.pipeRadius, 1, 12),
-    ball: new THREE.SphereGeometry(15, 12, 12),
-    flange: new THREE.CylinderGeometry(35, 35, 5, 24),
-    ring: new THREE.CylinderGeometry(14, 14, 9, 12),
-    collar: new THREE.CylinderGeometry(13, 13, 18, 12),
-    bracket: new THREE.CylinderGeometry(15, 15, 24, 12),
-    cube: new THREE.BoxGeometry(25, 25, 25),
+    cyl: new THREE.CylinderGeometry(1, 1, 1, 14),
+    disc: new THREE.CylinderGeometry(1, 1, 1, 24),
+    sphere: new THREE.SphereGeometry(1, 12, 10),
     plane: new THREE.PlaneGeometry(1, 1)
   };
 
   const model = new THREE.Group();
   scene.add(model);
 
-  /* ---------------- Состояние ---------------- */
-  // Щит: { id, y, x1, x2, supports: [x...] } — x1/x2 края щита, supports — оси опор.
+  let dirty = true;
+  const requestRender = () => { dirty = true; };
+  controls.addEventListener("change", requestRender);
+
+  // ---------- Состояние ----------
+  // Щит: { id, y, L, R, sup: [x опор по возрастанию] }
   let boards = [];
   let nextId = 1;
-  let brokenPipes = new Set();
+  let broken = new Set();
   let visibleUI = true;
-  let buttons = [];
+  let controlsList = [];
   let dims = [];
-  let drag = null;
-  let needsRender = true;
+  let exts = [];
+  let gesture = null;
   let openSheet = null;
 
   const depth = () => $("deep").checked ? 400 : 200;
   const wallZ = () => $("deep").checked ? -300 : -150;
   const woodZ = () => $("deep").checked ? -100 : -25;
   const frontZ = () => woodZ() + depth() / 2;
+  const backZ = () => woodZ() - depth() / 2;
   const pipeKey = (x, y1, y2) => `${x}:${y1}:${y2}`;
-  const last = arr => arr[arr.length - 1];
+  const boardById = id => boards.find(b => b.id === id);
+  const isDragging = () => !!(gesture && gesture.started);
 
-  function readNum(id, min, max, def) {
-    const raw = $(id).value;
-    const v = Number(raw);
-    return r10(clamp(raw !== "" && Number.isFinite(v) ? v : def, min, max));
-  }
-  const ovSetting = () => readNum("overhang", 100, C.maxOverhang, 200);
-  const firstSetting = () => readNum("first", C.minSpan, C.maxSpan, 500);
-  const newLenSetting = () => readNum("newlen", C.minSpan, 6000, 500);
-  const stepSetting = () => Number($("height").value) || 300;
-
-  function makeBoard(y, supports, ov) {
-    const s = [...supports].sort((a, b) => a - b);
-    return { id: nextId++, y, supports: s, x1: s[0] - ov, x2: last(s) + ov };
+  function makeInitialBoard() {
+    const ov = ovSetting(), f = firstLen();
+    return { id: nextId++, y: 0, L: -ov, R: f + ov, sup: [0, f] };
   }
 
-  function initialState() {
-    boards = [makeBoard(0, [0, firstSetting()], ovSetting())];
-    brokenPipes = new Set();
+  // ---------- Геометрия модели ----------
+  function add(geo, mat, x, y, z, sx, sy, sz) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.scale.set(sx, sy, sz);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    model.add(m);
+    return m;
   }
-
-  /* ---------------- Toast ---------------- */
-  let toastTimer = 0;
-  function toast(text) {
-    const t = $("toast");
-    t.textContent = text;
-    t.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
-  }
-
-  /* ---------------- Геометрия ---------------- */
-  function mesh(geometry, material, x, y, z) {
-    const o = new THREE.Mesh(geometry, material);
-    o.position.set(x, y, z);
-    o.castShadow = true;
-    model.add(o);
-    return o;
-  }
-
-  function pipeV(x, y1, y2) {
+  function pipe(x, y1, y2) {
     if (y2 <= y1) return;
-    const o = mesh(G.pipe, pipeMat, x, (y1 + y2) / 2, 0);
-    o.scale.y = y2 - y1;
+    add(G.cyl, pipeMat, x, (y1 + y2) / 2, 0, MM.pipeR, y2 - y1, MM.pipeR);
   }
-
+  function hTube(x, y, z1, z2) {
+    const m = add(G.cyl, pipeMat, x, y, (z1 + z2) / 2, MM.pipeR, Math.abs(z2 - z1), MM.pipeR);
+    m.rotation.x = Math.PI / 2;
+  }
   function wallMount(x, y) {
-    mesh(G.ball, fitMat, x, y, 0);
-    const len = -wallZ();
-    const tube = mesh(G.pipe, pipeMat, x, y, -len / 2);
-    tube.scale.y = len;
-    tube.rotation.x = Math.PI / 2;
-    const flange = mesh(G.flange, pipeMat, x, y, wallZ());
-    flange.rotation.x = Math.PI / 2;
+    add(G.sphere, fitMat, x, y, 0, 15, 15, 15);
+    hTube(x, y, 0, wallZ());
+    const f = add(G.disc, pipeMat, x, y, wallZ(), 35, 5, 35);
+    f.rotation.x = Math.PI / 2;
     return 1;
   }
-
-  function supportUnderDeepShelf(x, y) {
-    const len = 200;
-    mesh(G.bracket, fitMat, x, y - 22, 0);
-    const tube = mesh(G.pipe, pipeMat, x, y - 22, -len / 2);
-    tube.scale.y = len;
-    tube.rotation.x = Math.PI / 2;
-    mesh(G.cube, fitMat, x, y - 22, -len);
+  function deepSupport(x, y) {
+    add(G.cyl, fitMat, x, y - 22, 0, 15, 24, 15);
+    hTube(x, y - 22, 0, -200);
+    add(G.box, fitMat, x, y - 22, -200, 25, 25, 25);
     return 1;
   }
+  function clearModel() {
+    for (let i = model.children.length - 1; i >= 0; i--) model.remove(model.children[i]);
+  }
 
-  // Колонны опор: одна ось X, уровни соединены трубой, разрезы делят колонну на группы.
-  function computeGroups() {
-    const levelsByX = new Map();
+  // ---------- Логика щитов ----------
+  function normalize() {
+    const byY = new Map();
     for (const b of boards) {
-      for (const x of b.supports) {
-        if (!levelsByX.has(x)) levelsByX.set(x, new Set());
-        levelsByX.get(x).add(b.y);
+      b.sup = [...new Set(b.sup)].sort(byNum);
+      if (!byY.has(b.y)) byY.set(b.y, []);
+      byY.get(b.y).push(b);
+    }
+    const out = [];
+    for (const row of byY.values()) {
+      row.sort((a, c) => a.L - c.L);
+      let cur = null;
+      for (const b of row) {
+        if (cur && b.L < cur.R) {
+          cur.R = Math.max(cur.R, b.R);
+          cur.L = Math.min(cur.L, b.L);
+          cur.sup = [...new Set([...cur.sup, ...b.sup])].sort(byNum);
+        } else {
+          cur = b;
+          out.push(b);
+        }
       }
     }
-    const groups = [];
-    const segs = [];
-    for (const [x, set] of levelsByX) {
-      const levels = [...set].sort((a, b) => a - b);
-      let cur = [levels[0]];
-      for (let i = 0; i < levels.length - 1; i++) {
-        const y1 = levels[i], y2 = levels[i + 1];
-        const key = pipeKey(x, y1, y2);
-        const breakable = y2 - y1 > 2 * C.cap;
-        const broken = breakable && brokenPipes.has(key);
-        segs.push({ x, y1, y2, key, breakable, broken });
-        if (broken) { groups.push({ x, levels: cur }); cur = [y2]; }
-        else cur.push(y2);
+    boards = out.filter(b => b.sup.length >= 2 && b.R > b.L);
+  }
+
+  function splitLong(b) {
+    const out = [b.sup[0]];
+    for (let i = 1; i < b.sup.length; i++) {
+      const a = b.sup[i - 1], c = b.sup[i], span = c - a;
+      if (span > MM.maxSpan) {
+        const n = Math.ceil(span / MM.maxSpan);
+        for (let k = 1; k < n; k++) out.push(a + r10(span * k / n));
       }
-      groups.push({ x, levels: cur });
+      out.push(c);
     }
-    return { groups, segs };
+    b.sup = out;
   }
 
-  function affectedBoards(g) {
-    return boards.filter(b => g.levels.includes(b.y) && b.supports.includes(g.x));
+  function levelsAt(x) {
+    return boards.filter(b => b.sup.includes(x)).map(b => b.y).sort(byNum);
   }
 
-  function bounds() {
-    if (!boards.length) return { minX: -300, maxX: 800, minY: -150, maxY: 300 };
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  function computeParts() {
+    const byX = new Map();
+    for (const b of boards) for (const x of b.sup) {
+      if (!byX.has(x)) byX.set(x, []);
+      byX.get(x).push({ y: b.y, id: b.id });
+    }
+    const parts = [], links = [], valid = new Set();
+    for (const [x, list] of byX) {
+      list.sort((p, q) => p.y - q.y);
+      let cur = { x, items: [list[0]] };
+      parts.push(cur);
+      for (let i = 1; i < list.length; i++) {
+        const y1 = list[i - 1].y, y2 = list[i].y, key = pipeKey(x, y1, y2);
+        const canBreak = y2 - y1 > 2 * MM.cap;
+        if (canBreak) valid.add(key);
+        const isBroken = canBreak && broken.has(key);
+        links.push({ x, y1, y2, key, canBreak, isBroken });
+        if (isBroken) { cur = { x, items: [list[i]] }; parts.push(cur); }
+        else cur.items.push(list[i]);
+      }
+    }
+    return { parts, links, valid };
+  }
+
+  function validateAll() {
     for (const b of boards) {
-      minX = Math.min(minX, b.x1); maxX = Math.max(maxX, b.x2);
-      minY = Math.min(minY, b.y); maxY = Math.max(maxY, b.y);
-    }
-    return { minX, maxX, minY: minY - C.cap - 60, maxY: maxY + C.cap + 60 };
-  }
-
-  function validateBoards(list) {
-    for (const b of list) {
-      const s = b.supports;
-      if (s.length < 2) return "у щита меньше двух опор";
-      for (let i = 0; i < s.length - 1; i++) {
-        const d = s[i + 1] - s[i];
-        if (d < C.minSpan) return `пролёт ${d} мм меньше ${C.minSpan} мм`;
-        if (d > C.maxSpan) return `пролёт ${d} мм больше ${C.maxSpan} мм`;
+      for (let i = 1; i < b.sup.length; i++) {
+        const s = b.sup[i] - b.sup[i - 1];
+        if (s < MM.minSpan) return `Пролёт стал бы ${s} мм — меньше ${MM.minSpan} мм`;
+        if (s > MM.maxSpan) return `Пролёт стал бы ${s} мм — больше ${MM.maxSpan} мм`;
       }
-      const l = s[0] - b.x1, r = b.x2 - last(s);
-      if (l < 0 || r < 0) return "опора выходит за край щита";
-      if (l > C.maxOverhang || r > C.maxOverhang) return `свес больше ${C.maxOverhang} мм`;
+      const oL = b.sup[0] - b.L, oR = b.R - last(b.sup);
+      if (oL <= 0 || oR <= 0) return "Опора вышла бы за край щита";
+      if (oL > MM.maxOverhang || oR > MM.maxOverhang) return "Свес стал бы больше 500 мм";
     }
     const byY = new Map();
-    for (const b of list) {
+    for (const b of boards) {
       if (!byY.has(b.y)) byY.set(b.y, []);
       byY.get(b.y).push(b);
     }
     for (const row of byY.values()) {
-      row.sort((a, b) => a.x1 - b.x1);
+      row.sort((a, c) => a.L - c.L);
+      for (let i = 1; i < row.length; i++)
+        if (row[i].L < row[i - 1].R) return "Щиты на одном уровне перекрылись бы";
+    }
+    return "";
+  }
+
+  function firstRef() {
+    if (!boards.length) return null;
+    return [...boards].sort((a, b) => a.y - b.y || a.L - b.L)[0];
+  }
+
+  function applyFirstSpan() {
+    const N = firstLen();
+    $("first").value = N;
+    if (!boards.length) {
+      boards = [makeInitialBoard()];
+      broken.clear();
+      rebuild();
+      fitView();
+      return;
+    }
+    const ref = firstRef();
+    const a = ref.sup[0], b = ref.sup[1];
+    const delta = N - (b - a);
+    if (!delta) return;
+    const snap = JSON.stringify(boards);
+    const snapBroken = new Set(broken);
+    const sh = x => x >= b ? x + delta : x;
+    for (const q of boards) {
+      q.sup = q.sup.map(sh);
+      if (q.L >= b) q.L += delta;
+      if (q.R >= b) q.R += delta;
+    }
+    broken = new Set([...broken].map(k => {
+      const [x, y1, y2] = k.split(":").map(Number);
+      return pipeKey(sh(x), y1, y2);
+    }));
+    const err = validateAll();
+    if (err) {
+      boards = JSON.parse(snap);
+      broken = snapBroken;
+      toast(`Нельзя изменить первый пролёт: ${err.charAt(0).toLowerCase() + err.slice(1)}`);
+    }
+    rebuild();
+  }
+
+  function applyOverhang() {
+    const ov = ovSetting();
+    for (const b of boards) { b.L = b.sup[0] - ov; b.R = last(b.sup) + ov; }
+    const byY = new Map();
+    for (const b of boards) {
+      if (!byY.has(b.y)) byY.set(b.y, []);
+      byY.get(b.y).push(b);
+    }
+    for (const row of byY.values()) {
+      row.sort((p, q) => p.sup[0] - q.sup[0]);
       for (let i = 1; i < row.length; i++) {
-        if (row[i - 1].x2 > row[i].x1) return "щиты на одном уровне перекрываются";
+        const p = row[i - 1], q = row[i];
+        if (q.L < p.R) {
+          const m = r10((last(p.sup) + q.sup[0]) / 2);
+          p.R = m; q.L = m;
+        }
       }
     }
-    return null;
+    normalize();
+    rebuild();
   }
 
-  function offs() {
-    const c = isCoarse();
-    return {
-      total: c ? -36 : -26,
-      span: c ? 30 : 22,
-      support: c ? 68 : 54,
-      del: c ? 110 : 88,
-      pipeDx: c ? -48 : -40,
-      edgeDx: c ? 36 : 28,
-      blueUp: c ? 82 : 62,
-      blueDown: c ? 150 : 120
-    };
+  function edgeLimit(b, dir) {
+    let lim = dir > 0 ? b.R + 20000 : b.L - 20000;
+    for (const q of boards) {
+      if (q === b || q.y !== b.y) continue;
+      if (dir > 0 && q.L >= b.R) lim = Math.min(lim, q.L);
+      if (dir < 0 && q.R <= b.L) lim = Math.max(lim, q.R);
+    }
+    return lim;
   }
 
-  /* ---------------- Перестройка ---------------- */
-  function rebuild(opts = {}) {
-    const keep = !!opts.keepButtons;
-    model.clear();
+  function extendClick(id, dir) {
+    const b = boardById(id);
+    if (!b) return;
+    const ov = ovSetting();
+    const s0 = dir > 0 ? last(b.sup) : b.sup[0];
+    const lim = edgeLimit(b, dir);
+    const room = Math.floor((dir > 0 ? lim - s0 - ov : s0 - ov - lim) / 10) * 10;
+    const len = Math.min(sectionLen(), room);
+    if (len < MM.minSpan) { toast("Нет места для новой секции: мешает соседний щит"); return; }
+    const n = Math.ceil(len / MM.maxSpan);
+    for (let k = 1; k <= n; k++) b.sup.push(s0 + dir * r10(len * k / n));
+    if (dir > 0) b.R = Math.max(b.R, s0 + len + ov);
+    else b.L = Math.min(b.L, s0 - len - ov);
+    normalize();
+    rebuild();
+  }
+
+  function removeSpan(id, i) {
+    const b = boardById(id);
+    if (!b) return;
+    const ov = ovSetting();
+    const n = b.sup.length;
+    if (n <= 2) {
+      boards = boards.filter(q => q !== b);
+    } else if (i === 0) {
+      b.sup.shift();
+      b.L = Math.max(b.L, b.sup[0] - ov);
+    } else if (i === n - 2) {
+      b.sup.pop();
+      b.R = Math.min(b.R, last(b.sup) + ov);
+    } else {
+      const a = b.sup[i], c = b.sup[i + 1];
+      const left = { id: nextId++, y: b.y, L: b.L, R: a + ov, sup: b.sup.slice(0, i + 1) };
+      const right = { id: nextId++, y: b.y, L: c - ov, R: b.R, sup: b.sup.slice(i + 1) };
+      if (left.R > right.L) {
+        const m = r10((a + c) / 2);
+        left.R = m - 10; right.L = m + 10;
+      }
+      boards = boards.filter(q => q !== b).concat([left, right]);
+    }
+    normalize();
+    rebuild();
+    if (!boards.length) toast("Все полки удалены. Задайте длину первого пролёта, чтобы начать заново.");
+  }
+
+  function blueTargets() {
+    const step = heightStep();
+    const res = new Map();
+    for (const b of boards) {
+      for (let i = 0; i < b.sup.length - 1; i++) {
+        const a = b.sup[i], c = b.sup[i + 1];
+        for (const sign of [1, -1]) {
+          const blocked = boards.some(q =>
+            (sign > 0 ? q.y > b.y : q.y < b.y) &&
+            Math.min(c, last(q.sup)) - Math.max(a, q.sup[0]) > 0);
+          if (blocked) continue;
+          const ty = b.y + sign * step;
+          const key = `${ty}:${a}:${c}`;
+          if (!res.has(key)) res.set(key, { ty, a, c, fromY: b.y, sign });
+        }
+      }
+    }
+    return [...res.values()];
+  }
+
+  function addLevel(ty, a, c) {
+    const ov = ovSetting();
+    boards.push({ id: nextId++, y: ty, L: a - ov, R: c + ov, sup: [a, c] });
+    normalize();
+    const mb = boards.find(q => q.y === ty && q.L <= a && q.R >= c);
+    if (mb && mb.sup.length > 2) {
+      for (const x of [a, c]) {
+        const i = mb.sup.indexOf(x);
+        if (i < 0) continue;
+        const near = [mb.sup[i - 1], mb.sup[i + 1]]
+          .filter(v => v !== undefined && v !== a && v !== c);
+        if (near.some(v => Math.abs(v - x) < MM.minSpan)) mb.sup.splice(i, 1);
+      }
+      splitLong(mb);
+    }
+    rebuild();
+  }
+
+  function partRange(part) {
+    const ov = ovSetting();
+    const x = part.x;
+    let lo = -Infinity, hi = Infinity;
+    for (const it of part.items) {
+      const b = boardById(it.id);
+      if (!b) continue;
+      const i = b.sup.indexOf(x), n = b.sup.length;
+      if (i > 0) {
+        lo = Math.max(lo, b.sup[i - 1] + MM.minSpan);
+        hi = Math.min(hi, b.sup[i - 1] + MM.maxSpan);
+      } else {
+        const o = x - b.L;
+        lo = Math.max(lo, b.L + Math.min(ov, o));
+        hi = Math.min(hi, b.L + Math.max(MM.maxOverhang, o));
+      }
+      if (i < n - 1) {
+        hi = Math.min(hi, b.sup[i + 1] - MM.minSpan);
+        lo = Math.max(lo, b.sup[i + 1] - MM.maxSpan);
+      } else {
+        const o = b.R - x;
+        hi = Math.min(hi, b.R - Math.min(ov, o));
+        lo = Math.max(lo, b.R - Math.max(MM.maxOverhang, o));
+      }
+    }
+    lo = Math.min(lo, x);
+    hi = Math.max(hi, x);
+    return { lo: Math.ceil(lo / 10) * 10, hi: Math.floor(hi / 10) * 10 };
+  }
+
+  function canDelete(part) {
+    for (const it of part.items) {
+      const b = boardById(it.id);
+      if (!b) continue;
+      const i = b.sup.indexOf(part.x), n = b.sup.length;
+      if (n <= 2) return "на щите должно остаться минимум 2 опоры";
+      if (i === 0) {
+        const o = b.sup[1] - b.L;
+        if (o > MM.maxOverhang) return `свес станет ${o} мм — больше 500 мм`;
+      } else if (i === n - 1) {
+        const o = b.R - b.sup[n - 2];
+        if (o > MM.maxOverhang) return `свес станет ${o} мм — больше 500 мм`;
+      } else {
+        const s = b.sup[i + 1] - b.sup[i - 1];
+        if (s > MM.maxSpan) return `пролёт станет ${s} мм — больше 1500 мм`;
+      }
+    }
+    return "";
+  }
+
+  // Части трубы выше и ниже уходящей части остаются разделёнными.
+  function keepNeighboursSeparated(part) {
+    const ys = levelsAt(part.x);
+    const mine = part.items.map(i => i.y);
+    const lo = Math.min(...mine), hi = Math.max(...mine);
+    const below = ys.filter(y => y < lo).pop();
+    const above = ys.find(y => y > hi);
+    if (below !== undefined && above !== undefined)
+      broken.add(pipeKey(part.x, below, above));
+  }
+
+  function deletePart(part) {
+    const err = canDelete(part);
+    if (err) { toast(`Нельзя удалить опору: ${err}`); return; }
+    keepNeighboursSeparated(part);
+    for (const it of part.items) {
+      const b = boardById(it.id);
+      if (b) b.sup = b.sup.filter(v => v !== part.x);
+    }
+    rebuild();
+  }
+
+  // ---------- Перестройка ----------
+  function rebuild() {
+    const dragging = isDragging();
+    clearModel();
     $("dimension-svg").replaceChildren();
-    $("dimension-layer").querySelectorAll(".dimension-label").forEach(n => n.remove());
+    $("dimension-layer").querySelectorAll(".dimension-label").forEach(el => el.remove());
     dims = [];
-    if (!keep) {
-      $("buttons").replaceChildren();
-      buttons = [];
-    }
+    exts = [];
 
-    const { groups, segs } = computeGroups();
-    if (!drag) {
-      const valid = new Set(segs.filter(s => s.breakable).map(s => s.key));
-      brokenPipes = new Set([...brokenPipes].filter(k => valid.has(k)));
-    }
+    const { parts, links, valid } = computeParts();
+    if (!dragging) broken = new Set([...broken].filter(k => valid.has(k)));
 
-    const d = depth(), wz = woodZ(), fz = frontZ(), o = offs(), half = C.thickness / 2;
-    let area = 0;
-    let tubes = 0;
-    let top = null;
+    const d = depth(), fz = frontZ();
+    let area = 0, tubes = 0;
 
     for (const b of boards) {
-      const len = b.x2 - b.x1;
+      const len = b.R - b.L;
       area += len * d / 1e6;
-      const m = mesh(G.box, woodMat, (b.x1 + b.x2) / 2, b.y, wz);
-      m.scale.set(len, C.thickness, d);
-      m.receiveShadow = true;
-
-      addDim(V(b.x1, b.y + half, fz), V(b.x2, b.y + half, fz), `${len} мм`, "total", o.total);
-      const s = b.supports, yb = b.y - half;
-      if (s[0] - b.x1 > 0)
-        addDim(V(b.x1, yb, fz), V(s[0], yb, fz), String(s[0] - b.x1), "overhang", o.span);
-      for (let i = 0; i < s.length - 1; i++)
-        addDim(V(s[i], yb, fz), V(s[i + 1], yb, fz), String(s[i + 1] - s[i]), "span", o.span);
-      if (b.x2 - last(s) > 0)
-        addDim(V(last(s), yb, fz), V(b.x2, yb, fz), String(b.x2 - last(s)), "overhang", o.span);
-
-      if (!top || b.y > top.y || (b.y === top.y && b.x2 > top.x2)) top = b;
-    }
-    if (top) {
-      addDim(V(top.x2 + 45, top.y + half, wz - d / 2), V(top.x2 + 45, top.y + half, wz + d / 2),
-        `${d} мм`, "depth", 0);
+      add(G.box, woodMat, (b.L + b.R) / 2, b.y, woodZ(), len, MM.thickness, d);
     }
 
-    for (const g of groups) {
-      const lo = g.levels[0], hi = last(g.levels);
-      pipeV(g.x, lo - C.cap, lo);
-      tubes++;
-      tubes += wallMount(g.x, lo - C.cap);
-      for (let i = 0; i < g.levels.length - 1; i++) {
-        pipeV(g.x, g.levels[i], g.levels[i + 1]);
-        tubes++;
-      }
-      pipeV(g.x, hi, hi + C.cap);
-      tubes++;
-      tubes += wallMount(g.x, hi + C.cap);
-      for (const y of g.levels) {
-        mesh(G.ring, fitMat, g.x, y + 14, 0);
-        if ($("deep").checked) tubes += supportUnderDeepShelf(g.x, y);
-        else mesh(G.collar, fitMat, g.x, y - 19, 0);
+    for (const part of parts) {
+      const x = part.x;
+      const ys = part.items.map(i => i.y).sort(byNum);
+      const low = ys[0], high = last(ys);
+      pipe(x, low - MM.cap, low); tubes++;
+      tubes += wallMount(x, low - MM.cap);
+      for (let i = 1; i < ys.length; i++) { pipe(x, ys[i - 1], ys[i]); tubes++; }
+      pipe(x, high, high + MM.cap); tubes++;
+      tubes += wallMount(x, high + MM.cap);
+      for (const y of ys) {
+        add(G.cyl, fitMat, x, y + 14, 0, 14, 9, 14);
+        if ($("deep").checked) tubes += deepSupport(x, y);
+        else add(G.cyl, fitMat, x, y - 19, 0, 13, 18, 13);
       }
     }
 
-    const bb = bounds();
-    const cx = (bb.minX + bb.maxX) / 2, cy = (bb.minY + bb.maxY) / 2;
-    const wall = mesh(G.plane, wallMat, cx, cy, wallZ() - 7);
-    wall.scale.set(bb.maxX - bb.minX + 8000, bb.maxY - bb.minY + 5000, 1);
+    let minL = -200, maxR = 700, minY = 0, maxY = 0;
+    if (boards.length) {
+      minL = Math.min(...boards.map(b => b.L));
+      maxR = Math.max(...boards.map(b => b.R));
+      minY = Math.min(...boards.map(b => b.y));
+      maxY = Math.max(...boards.map(b => b.y));
+    }
+    const W = maxR - minL;
+    const H = maxY - minY + 2 * MM.cap;
+    const cx = (minL + maxR) / 2, cy = (minY + maxY) / 2;
+
+    const wall = add(G.plane, wallMat, cx, cy, wallZ() - 7, W + 4000, H + 3000, 1);
     wall.castShadow = false;
-    wall.receiveShadow = true;
 
-    light.position.set(cx + 450, cy + 900, 900);
-    light.target.position.set(cx, cy, wallZ());
-    const sh = Math.max(bb.maxX - bb.minX, bb.maxY - bb.minY) / 2 + 700;
+    const half = Math.max(W, H) / 2 + 600;
+    light.target.position.set(cx, cy, -50);
+    light.position.set(cx + 675, cy + 1350, 1350);
     const sc = light.shadow.camera;
-    sc.left = -sh; sc.right = sh; sc.top = sh; sc.bottom = -sh;
-    sc.near = 10; sc.far = 5000;
+    sc.left = -half; sc.right = half; sc.top = half; sc.bottom = -half;
+    sc.near = 10; sc.far = 6000;
     sc.updateProjectionMatrix();
 
-    if (!keep) createControls(groups, segs);
+    if (boards.length) buildDimensions(minL, maxR, W, H);
 
     const woodPrice = area * WOOD_RATE;
     const pipePrice = tubes * PIPE_RATE;
@@ -623,701 +846,524 @@
     $("pipe-price").textContent = money(pipePrice);
     $("pipe-count").textContent = String(tubes);
     $("total").textContent = money(woodPrice + pipePrice);
-    $("mtotal").textContent = money(woodPrice + pipePrice);
+    $("bar-total").textContent = money(woodPrice + pipePrice);
+    $("overall").textContent = boards.length ? `${W} × ${H} мм` : "—";
 
-    $("empty").hidden = boards.length > 0;
-    const info = firstSpanInfo();
-    if (info && document.activeElement !== $("first")) $("first").value = info.b - info.a;
+    if (!dragging) createControls(parts, links);
 
-    needsRender = true;
+    const ref = firstRef();
+    if (ref && document.activeElement !== $("first")) $("first").value = ref.sup[1] - ref.sup[0];
+
+    requestRender();
   }
 
-  /* ---------------- Кнопки управления ---------------- */
-  function addButton(opt) {
-    const el = document.createElement("button");
-    el.type = "button";
-    el.className = "control " + opt.cls;
-    el.textContent = opt.text;
-    el.title = opt.title || "";
-    el.setAttribute("aria-label", opt.title || opt.text);
-    if (opt.onClick) {
-      el.addEventListener("click", e => {
-        e.stopPropagation();
-        if (drag) return;
-        opt.onClick(e);
-      });
-    }
-    $("buttons").appendChild(el);
-    const item = {
-      el, point: opt.point, dx: opt.dx || 0, dy: opt.dy || 0,
-      anchor: opt.anchor || null, minPx: opt.minPx || 0, fallbackY: opt.fallbackY || -1
-    };
-    buttons.push(item);
-    return item;
-  }
-
-  function createControls(groups, segs) {
-    const o = offs(), fz = frontZ(), step = stepSetting(), ov = ovSetting();
-    const blueSeen = new Set();
+  function buildDimensions(minL, maxR, W, H) {
+    const s = sizes(), fz = frontZ();
 
     for (const b of boards) {
-      const s = b.supports;
-      for (let i = 0; i < s.length - 1; i++) {
-        const lo = s[i], hi = s[i + 1], cx = (lo + hi) / 2;
-        const id = b.id;
-
-        addButton({
-          point: V(cx, b.y, fz), text: "−", cls: "remove",
-          title: s.length > 2 ? "Удалить пролёт" : "Удалить полку",
-          onClick: () => removeSpan(id, i)
+      addDim(V(b.L, b.y + 10, fz), V(b.R, b.y + 10, fz),
+        { text: fmt(b.R - b.L), sy: -8, ly: -10, cls: "board" });
+      const pts = [b.L, ...b.sup, b.R];
+      for (let i = 1; i < pts.length; i++) {
+        const edge = i === 1 || i === pts.length - 1;
+        addDim(V(pts[i - 1], b.y - 10, fz), V(pts[i], b.y - 10, fz), {
+          text: fmt(pts[i] - pts[i - 1]), sy: s.main / 2 + 12, cls: edge ? "ovh" : "span"
         });
-
-        for (const sign of [1, -1]) {
-          const covered = boards.some(q =>
-            (sign > 0 ? q.y > b.y : q.y < b.y) &&
-            q.supports[0] < hi && last(q.supports) > lo);
-          if (covered) continue;
-          const key = `${b.y + sign * step}:${lo}:${hi}`;
-          if (blueSeen.has(key)) continue;
-          blueSeen.add(key);
-          addButton({
-            point: V(cx, b.y + sign * step * 0.55, fz),
-            anchor: V(cx, b.y, fz),
-            minPx: sign > 0 ? o.blueUp : o.blueDown,
-            fallbackY: -sign,
-            text: "+", cls: "vertical",
-            title: sign > 0 ? "Добавить полку сверху" : "Добавить полку снизу",
-            onClick: () => addLevel(id, i, sign)
-          });
-        }
-      }
-
-      for (const dir of [-1, 1]) {
-        const edge = dir > 0 ? b.x2 : b.x1;
-        const outer = dir > 0 ? last(s) : s[0];
-        let room = Infinity;
-        for (const q of boards) {
-          if (q === b || q.y !== b.y) continue;
-          if (dir > 0 && q.x1 >= b.x2) room = Math.min(room, q.x1 - 10 - b.x2);
-          if (dir < 0 && q.x2 <= b.x1) room = Math.min(room, b.x1 - (q.x2 + 10));
-        }
-        if (room <= 0 && Math.abs(edge - outer) <= ov) continue;
-        const id = b.id;
-        const item = addButton({
-          point: V(edge, b.y, fz), dx: dir * o.edgeDx, text: "+", cls: "horizontal",
-          title: "Нажмите — добавить секцию; потяните — изменить длину щита"
-        });
-        item.el.addEventListener("pointerdown", e => startEdgeDrag(e, id, dir, item));
       }
     }
 
-    for (const g of groups) {
-      const y = g.levels[0] - C.thickness / 2;
-      const item = addButton({
-        point: V(g.x, y, fz), dy: o.support, text: "⇔", cls: "support",
-        title: "Потяните, чтобы сдвинуть опору"
-      });
-      item.el.addEventListener("pointerdown", e => startSupportDrag(e, g, item));
+    // Глубина — один раз, на верхнем щите.
+    const top = [...boards].sort((a, b) => b.y - a.y || b.R - a.R)[0];
+    addDim(V(top.R, top.y + 10, backZ()), V(top.R, top.y + 10, fz),
+      { text: fmt(depth()), sx: s.main + 10, side: "right", cls: "depth", always: true });
 
-      const reason = deleteCheck(g);
-      addButton({
-        point: V(g.x, y, fz), dy: o.del, text: "×",
-        cls: "del-support" + (reason ? " disabled" : ""),
-        title: reason ? `Нельзя удалить: ${reason}` : "Удалить опору",
-        onClick: () => {
-          const r = deleteCheck(g);
-          if (r) toast("Нельзя удалить опору: " + r);
-          else deleteSupport(g);
-        }
-      });
+    // Вертикальная цепочка между уровнями.
+    const ys = [...new Set(boards.map(b => b.y))].sort(byNum);
+    const y0 = ys[0], y1 = last(ys);
+    const chainX = -(s.main + 22);
+    const edgeX = -(s.main + 12);
+    if (ys.length > 1) {
+      for (let i = 1; i < ys.length; i++) {
+        addDim(V(minL, ys[i - 1], fz), V(minL, ys[i], fz),
+          { text: fmt(ys[i] - ys[i - 1]), sx: chainX, side: "left", cls: "level" });
+      }
+      for (const y of ys) {
+        const Ly = Math.min(...boards.filter(b => b.y === y).map(b => b.L));
+        addExt(V(minL, y, fz), V(Ly, y, fz), { sax: chainX - 4, sbx: edgeX, cls: "" });
+      }
     }
 
-    for (const sg of segs) {
-      if (!sg.breakable) continue;
-      addButton({
-        point: V(sg.x, (sg.y1 + sg.y2) / 2, 0), dx: o.pipeDx,
-        text: sg.broken ? "↔" : "\u2702\uFE0E",
-        cls: sg.broken ? "pipe broken" : "pipe",
-        title: sg.broken ? "Соединить трубу" : "Разрезать трубу",
-        onClick: () => {
-          if (brokenPipes.has(sg.key)) brokenPipes.delete(sg.key);
-          else brokenPipes.add(sg.key);
-          rebuild();
-        }
-      });
-    }
+    // Общая высота.
+    const hx = ys.length > 1 ? chainX - (isCompact() ? 40 : 64) : chainX;
+    const yb = y0 - MM.cap, yt = y1 + MM.cap;
+    addDim(V(minL, yb, fz), V(minL, yt, fz), {
+      text: isCompact() ? `В ${H}` : `Высота ${H} мм`,
+      sx: hx, side: "left", cls: "total", always: true
+    });
+    addExt(V(minL, yb, fz), V(minL, yb, fz), { sax: hx - 4, sbx: edgeX, cls: "total" });
+    addExt(V(minL, yt, fz), V(minL, yt, fz), { sax: hx - 4, sbx: edgeX, cls: "total" });
+
+    // Общая ширина.
+    const wy = s.small * 2 + 36;
+    addDim(V(minL, yb, fz), V(maxR, yb, fz), {
+      text: isCompact() ? `Ш ${W}` : `Ширина ${W} мм`, sy: wy, cls: "total", always: true
+    });
+    addExt(V(minL, yb, fz), V(minL, yb, fz), { say: 6, sby: wy + 4, cls: "total" });
+    addExt(V(maxR, yb, fz), V(maxR, yb, fz), { say: 6, sby: wy + 4, cls: "total" });
   }
 
-  /* ---------------- Размерные линии ---------------- */
-  function addDim(start, end, text, cls, dy) {
-    const NS = "http://www.w3.org/2000/svg";
+  const NS = "http://www.w3.org/2000/svg";
+  function addDim(a, b, o) {
     const svg = $("dimension-svg");
+    const cls = o.cls || "";
     const line = document.createElementNS(NS, "line");
     const t1 = document.createElementNS(NS, "line");
     const t2 = document.createElementNS(NS, "line");
-    line.setAttribute("class", "dim-line " + cls);
-    t1.setAttribute("class", "dim-tick " + cls);
-    t2.setAttribute("class", "dim-tick " + cls);
+    line.setAttribute("class", `dim-line ${cls}`);
+    t1.setAttribute("class", `dim-tick ${cls}`);
+    t2.setAttribute("class", `dim-tick ${cls}`);
     svg.append(line, t1, t2);
-    const label = document.createElement("div");
-    label.className = "dimension-label " + cls;
-    label.textContent = text;
-    $("dimension-layer").appendChild(label);
+    let label = null;
+    if (o.text) {
+      label = document.createElement("div");
+      label.className = `dimension-label ${cls}${o.side ? " side-" + o.side : ""}`;
+      label.textContent = o.text;
+      $("dimension-layer").appendChild(label);
+    }
     dims.push({
-      start, end, dy, line, t1, t2, label,
-      small: cls === "span" || cls === "overhang",
-      w: text.length * 6.6 + 12
+      a, b, line, t1, t2, label,
+      sx: o.sx || 0, sy: o.sy || 0, lx: o.lx || 0, ly: o.ly || 0,
+      side: o.side || "", always: !!o.always, w: 0, h: 0
     });
   }
-
-  /* ---------------- Действия ---------------- */
-  function firstSpanInfo() {
-    if (!boards.length) return null;
-    let a = Infinity;
-    for (const b of boards) a = Math.min(a, b.supports[0]);
-    const owner = boards.filter(b => b.supports[0] === a).sort((p, q) => p.y - q.y)[0];
-    return { a, b: owner.supports[1] };
+  function addExt(a, b, o) {
+    const line = document.createElementNS(NS, "line");
+    line.setAttribute("class", `dim-ext ${o.cls || ""}`);
+    $("dimension-svg").appendChild(line);
+    exts.push({ a, b, line, sax: o.sax || 0, say: o.say || 0, sbx: o.sbx || 0, sby: o.sby || 0 });
   }
 
-  function applyFirstSpan() {
-    const L = firstSetting();
-    $("first").value = L;
-    if (!boards.length) {
-      boards = [makeBoard(0, [0, L], ovSetting())];
-      rebuild();
-      fitView();
-      return;
-    }
-    const info = firstSpanInfo();
-    const delta = L - (info.b - info.a);
-    if (!delta) return;
-    const snapBoards = JSON.parse(JSON.stringify(boards));
-    const snapPipes = new Set(brokenPipes);
-    for (const b of boards) {
-      const s0 = b.supports[0], sN = last(b.supports);
-      if (s0 >= info.b) b.x1 += delta;
-      if (sN >= info.b) b.x2 += delta;
-      b.supports = b.supports.map(x => x >= info.b ? x + delta : x);
-    }
-    brokenPipes = new Set([...brokenPipes].map(k => {
-      const [x, y1, y2] = k.split(":").map(Number);
-      return pipeKey(x >= info.b ? x + delta : x, y1, y2);
-    }));
-    const err = validateBoards(boards);
-    if (err) {
-      boards = snapBoards;
-      brokenPipes = snapPipes;
-      toast("Нельзя изменить первый пролёт: " + err);
-    }
-    rebuild();
+  // ---------- Кнопки управления ----------
+  function ctl(text, cls, point, opt, title, onClick) {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = `control ${cls}`;
+    el.textContent = text;
+    el.title = title;
+    el.setAttribute("aria-label", title);
+    if (onClick) el.addEventListener("click", e => {
+      e.stopPropagation();
+      if (gesture) return;
+      onClick();
+    });
+    $("buttons").appendChild(el);
+    const c = {
+      el, point, ax: opt.ax || 0, dy: opt.dy || 0,
+      minFrom: opt.minFrom || null, minDist: opt.minDist || 0, sign: opt.sign || 0
+    };
+    controlsList.push(c);
+    return c;
   }
 
-  function applyOverhang() {
-    const ov = ovSetting();
-    $("overhang").value = ov;
+  function createControls(parts, links) {
+    const host = $("buttons");
+    host.replaceChildren();
+    host.classList.remove("dragging");
+    controlsList = [];
+    const s = sizes(), fz = frontZ(), step = heightStep();
+
     for (const b of boards) {
-      b.x1 = b.supports[0] - ov;
-      b.x2 = last(b.supports) + ov;
-    }
-    const byY = new Map();
-    for (const b of boards) {
-      if (!byY.has(b.y)) byY.set(b.y, []);
-      byY.get(b.y).push(b);
-    }
-    for (const row of byY.values()) {
-      row.sort((p, q) => p.supports[0] - q.supports[0]);
-      for (let i = 1; i < row.length; i++) {
-        const p = row[i - 1], c = row[i];
-        if (p.x2 + 10 > c.x1) {
-          const gap = c.supports[0] - last(p.supports);
-          const o = Math.max(0, Math.min(ov, Math.floor((gap - 10) / 20) * 10));
-          p.x2 = last(p.supports) + o;
-          c.x1 = c.supports[0] - o;
-        }
+      for (let i = 0; i < b.sup.length - 1; i++) {
+        const cx = (b.sup[i] + b.sup[i + 1]) / 2;
+        const id = b.id;
+        ctl("−", "remove", V(cx, b.y, fz), {}, "Удалить пролёт", () => removeSpan(id, i));
+      }
+      for (const dir of [-1, 1]) {
+        const edge = dir > 0 ? b.R : b.L;
+        const c = ctl("+", "horizontal", V(edge, b.y, fz), { ax: dir * (s.main / 2 + 6) },
+          "Нажмите — добавить секцию; потяните — изменить длину щита");
+        bindGesture(c, greenHandlers(b.id, dir));
       }
     }
-    rebuild();
-  }
 
-  function removeSpan(id, i) {
-    const b = boards.find(q => q.id === id);
-    if (!b) return;
-    const s = b.supports, ov = ovSetting();
-    if (s.length <= 2) {
-      boards = boards.filter(q => q !== b);
-    } else if (i === 0) {
-      b.supports = s.slice(1);
-      b.x1 = Math.max(b.x1, b.supports[0] - ov);
-    } else if (i === s.length - 2) {
-      b.supports = s.slice(0, -1);
-      b.x2 = Math.min(b.x2, last(b.supports) + ov);
-    } else {
-      const gap = s[i + 1] - s[i];
-      const o = Math.max(0, Math.min(ov, Math.floor((gap - 10) / 20) * 10));
-      const right = { id: nextId++, y: b.y, supports: s.slice(i + 1), x1: s[i + 1] - o, x2: b.x2 };
-      b.supports = s.slice(0, i + 1);
-      b.x2 = s[i] + o;
-      boards.push(right);
+    for (const t of blueTargets()) {
+      const cx = (t.a + t.c) / 2;
+      ctl("+", "vertical", V(cx, t.fromY + t.sign * step * .6, fz),
+        { minFrom: V(cx, t.fromY, fz), minDist: s.main + 24, sign: t.sign },
+        t.sign > 0 ? "Добавить полку сверху" : "Добавить полку снизу",
+        () => addLevel(t.ty, t.a, t.c));
     }
-    rebuild();
+
+    for (const part of parts) {
+      const low = Math.min(...part.items.map(i => i.y));
+      const p = V(part.x, low - MM.cap, 0);
+      const mv = ctl("⇔", "support small", p, { dy: s.small / 2 + 6 },
+        "Потяните, чтобы сдвинуть опору");
+      bindGesture(mv, supportHandlers(part));
+      const err = canDelete(part);
+      ctl("×", "del-support small" + (err ? " disabled" : ""), p.clone(),
+        { dy: s.small * 1.5 + 12 },
+        err ? `Нельзя удалить: ${err}` : "Удалить опору",
+        () => deletePart(part));
+    }
+
+    for (const l of links) {
+      if (!l.canBreak) continue;
+      ctl(l.isBroken ? "↔" : "✂", "pipe small" + (l.isBroken ? " broken" : ""),
+        V(l.x, (l.y1 + l.y2) / 2, 0), { ax: -(s.small / 2 + 8) },
+        l.isBroken ? "Соединить трубы" : "Разорвать трубу",
+        () => {
+          if (broken.has(l.key)) broken.delete(l.key); else broken.add(l.key);
+          rebuild();
+        });
+    }
   }
 
-  function addLevel(id, i, sign) {
-    const b = boards.find(q => q.id === id);
-    if (!b) return;
-    const y = b.y + sign * stepSetting();
-    const a = b.supports[i], c = b.supports[i + 1], ov = ovSetting();
-    const fresh = { id: nextId++, y, supports: [a, c], x1: a - ov, x2: c + ov };
-
-    const toMerge = boards.filter(q => q.y === y && q.x1 <= fresh.x2 + 10 && q.x2 >= fresh.x1 - 10);
-    let result = fresh;
-    if (toMerge.length) {
-      const existing = toMerge.flatMap(q => q.supports);
-      const set = new Set(existing);
-      for (const x of [a, c]) {
-        if (!existing.some(e => Math.abs(e - x) < C.minSpan)) set.add(x);
-      }
-      const all = [...set].sort((p, q) => p - q);
-      result = {
-        id: fresh.id, y, supports: all,
-        x1: Math.min(all[0] - ov, ...toMerge.map(q => q.x1)),
-        x2: Math.max(last(all) + ov, ...toMerge.map(q => q.x2))
+  // ---------- Жесты (нажатие / перетаскивание) ----------
+  function bindGesture(c, h) {
+    c.el.addEventListener("pointerdown", e => {
+      if (gesture || (e.pointerType === "mouse" && e.button !== 0)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      gesture = {
+        c, h, id: e.pointerId, x0: e.clientX, y0: e.clientY,
+        touch: e.pointerType !== "mouse", started: false, data: null
       };
-    }
-    const next = boards.filter(q => !toMerge.includes(q));
-    next.push(result);
-    const err = validateBoards(next);
-    if (err) { toast("Нельзя добавить полку: " + err); return; }
-    boards = next;
-    rebuild();
-  }
-
-  function extendByClick(id, dir) {
-    const b = boards.find(q => q.id === id);
-    if (!b) return;
-    const ov = ovSetting();
-    const s = b.supports;
-    const outer = dir > 0 ? last(s) : s[0];
-    let edgeLimit = dir > 0 ? Infinity : -Infinity;
-    for (const q of boards) {
-      if (q === b || q.y !== b.y) continue;
-      if (dir > 0 && q.x1 >= b.x2) edgeLimit = Math.min(edgeLimit, q.x1 - 10);
-      if (dir < 0 && q.x2 <= b.x1) edgeLimit = Math.max(edgeLimit, q.x2 + 10);
-    }
-    const maxLen = (edgeLimit - outer) * dir - ov;
-    let len = newLenSetting();
-    if (maxLen < len) {
-      if (maxLen < C.minSpan) { toast("Не хватает места: рядом соседняя полка"); return; }
-      len = Math.floor(maxLen / 10) * 10;
-      toast(`Секция уменьшена до ${len} мм — дальше соседняя полка`);
-    }
-    const k = Math.ceil(len / C.maxSpan);
-    let pts = [];
-    for (let n = 1; n <= k; n++) pts.push(r10(outer + dir * len * n / k));
-
-    // Притягивание к уже существующим осям опор (±30 мм), если ограничения соблюдаются.
-    const globals = boards.filter(q => q !== b).flatMap(q => q.supports);
-    const snapped = pts.map(p => {
-      let best = p, bd = 31;
-      for (const g of globals) {
-        const dd = Math.abs(g - p);
-        if (dd < bd) { bd = dd; best = g; }
-      }
-      return best;
+      try { c.el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     });
-    const chain = [outer, ...snapped];
-    let ok = true;
-    for (let n = 0; n < chain.length - 1; n++) {
-      const sp = (chain[n + 1] - chain[n]) * dir;
-      if (sp < C.minSpan || sp > C.maxSpan) ok = false;
-    }
-    if ((edgeLimit - (last(snapped) + dir * ov)) * dir < 0) ok = false;
-    if (ok) pts = snapped;
-
-    const newOuter = last(pts);
-    b.supports = [...s, ...pts].sort((p, q) => p - q);
-    if (dir > 0) b.x2 = newOuter + ov; else b.x1 = newOuter - ov;
-    rebuild();
   }
 
-  function extendSupports(base, outer, edge, dir, globals) {
-    const ov = ovSetting();
-    const out = base.slice();
-    let lastS = outer;
-    let guard = 0;
-    while ((edge - lastS) * dir > C.maxOverhang && guard++ < 300) {
-      let c = edge - dir * ov;
-      if ((c - lastS) * dir > C.maxSpan) c = lastS + dir * C.maxSpan;
-      if ((c - lastS) * dir < C.minSpan) c = lastS + dir * C.minSpan;
-      c = r10(c);
-      let best = null;
-      for (const g of globals) {
-        const dd = Math.abs(g - c);
-        const span = (g - lastS) * dir;
-        const rest = (edge - g) * dir;
-        if (dd <= 30 && span >= C.minSpan && span <= C.maxSpan &&
-            rest >= 0 && rest <= C.maxOverhang &&
-            (best === null || dd < Math.abs(best - c))) best = g;
-      }
-      if (best !== null) c = best;
-      out.push(c);
-      lastS = c;
-    }
-    return out.sort((p, q) => p - q);
-  }
-
-  function deleteCheck(g) {
-    const aff = affectedBoards(g);
-    for (const b of aff) {
-      const s = b.supports, i = s.indexOf(g.x);
-      if (s.length <= 2) return "у щита должно остаться минимум 2 опоры";
-      if (i === 0) {
-        const ov = s[1] - b.x1;
-        if (ov > C.maxOverhang) return `свес станет ${ov} мм (больше ${C.maxOverhang} мм)`;
-      } else if (i === s.length - 1) {
-        const ov = b.x2 - s[i - 1];
-        if (ov > C.maxOverhang) return `свес станет ${ov} мм (больше ${C.maxOverhang} мм)`;
-      } else {
-        const sp = s[i + 1] - s[i - 1];
-        if (sp > C.maxSpan) return `пролёт станет ${sp} мм (больше ${C.maxSpan} мм)`;
-      }
-    }
-    return null;
-  }
-
-  function deleteSupport(g) {
-    for (const b of affectedBoards(g)) b.supports = b.supports.filter(x => x !== g.x);
-    rebuild();
-  }
-
-  /* ---------------- Перетаскивание ---------------- */
-  const _v = new THREE.Vector3();
-  function project(point) {
-    _v.copy(point).project(camera);
-    return { x: (_v.x * 0.5 + 0.5) * innerWidth, y: (-_v.y * 0.5 + 0.5) * innerHeight, z: _v.z };
-  }
-
-  function screenAxis(p0) {
-    camera.updateMatrixWorld();
-    const a = project(p0);
-    const b = project(p0.clone().add(V(100, 0, 0)));
-    const vx = b.x - a.x, vy = b.y - a.y, len = Math.hypot(vx, vy);
-    return { ux: len ? vx / len : 1, uy: len ? vy / len : 0, ppm: Math.max(0.01, len / 100) };
-  }
-
-  function beginDrag(e, data) {
-    drag = Object.assign(data, {
-      pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false
-    });
-    try { data.item.el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-    controls.enabled = false;
-  }
-
-  function startEdgeDrag(e, id, dir, item) {
-    if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
-    const b = boards.find(q => q.id === id);
-    if (!b) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const s = b.supports.slice();
-    const edge0 = dir > 0 ? b.x2 : b.x1;
-    const outer0 = dir > 0 ? last(s) : s[0];
-    const curOv = Math.abs(edge0 - outer0);
-    const minOv = Math.min(curOv, ovSetting());
-    let room = C.maxReach;
-    for (const q of boards) {
-      if (q === b || q.y !== b.y) continue;
-      if (dir > 0 && q.x1 >= b.x2) room = Math.min(room, q.x1 - 10 - edge0);
-      if (dir < 0 && q.x2 <= b.x1) room = Math.min(room, edge0 - (q.x2 + 10));
-    }
-    const globals = boards.filter(q => q !== b).flatMap(q => q.supports);
-    beginDrag(e, Object.assign({
-      type: "edge", id, dir, edge0, supports0: s, outer0,
-      minExt: -(curOv - minOv), maxExt: Math.max(0, room),
-      globals, item, lastEdge: edge0
-    }, screenAxis(V(edge0, b.y, frontZ()))));
-  }
-
-  function startSupportDrag(e, g, item) {
-    if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
-    const aff = affectedBoards(g);
-    if (!aff.length) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const ov = ovSetting();
-    let lo = -Infinity, hi = Infinity;
-    for (const b of aff) {
-      const s = b.supports, i = s.indexOf(g.x);
-      if (i > 0) {
-        lo = Math.max(lo, s[i - 1] + C.minSpan);
-        hi = Math.min(hi, s[i - 1] + C.maxSpan);
-      } else {
-        lo = Math.max(lo, b.x1 + ov);
-        hi = Math.min(hi, b.x1 + C.maxOverhang);
-      }
-      if (i < s.length - 1) {
-        hi = Math.min(hi, s[i + 1] - C.minSpan);
-        lo = Math.max(lo, s[i + 1] - C.maxSpan);
-      } else {
-        hi = Math.min(hi, b.x2 - ov);
-        lo = Math.max(lo, b.x2 - C.maxOverhang);
-      }
-    }
-    lo = Math.min(lo, g.x);
-    hi = Math.max(hi, g.x);
-    beginDrag(e, Object.assign({
-      type: "support", x0: g.x, lo, hi, lastX: g.x, item,
-      refs: aff.map(b => ({ id: b.id, idx: b.supports.indexOf(g.x) }))
-    }, screenAxis(V(g.x, g.levels[0], frontZ()))));
-  }
-
-  function onPointerMove(e) {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    e.preventDefault();
-    const px = e.clientX - drag.startX, py = e.clientY - drag.startY;
-    if (!drag.moved) {
-      if (Math.hypot(px, py) < (e.pointerType === "mouse" ? 4 : 9)) return;
-      drag.moved = true;
-      drag.item.el.classList.add("active");
+  addEventListener("pointermove", e => {
+    const g = gesture;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.started) {
+      if (Math.hypot(e.clientX - g.x0, e.clientY - g.y0) < (g.touch ? 8 : 4)) return;
+      const data = g.h.start(g);
+      if (!data) { gesture = null; return; }
+      g.data = data;
+      g.started = true;
+      controls.enabled = false;
       $("buttons").classList.add("dragging");
+      g.c.el.classList.add("active");
     }
-    const along = (px * drag.ux + py * drag.uy) / drag.ppm;
-    if (drag.type === "edge") moveEdge(along, e);
-    else moveSupport(along, e);
-  }
+    e.preventDefault();
+    g.h.move(g, e);
+  }, { passive: false });
 
-  function moveEdge(along, e) {
-    const b = boards.find(q => q.id === drag.id);
-    if (!b) return;
-    const ext = clamp(r10(along * drag.dir), drag.minExt, drag.maxExt);
-    const edge = drag.edge0 + drag.dir * ext;
-    if (edge !== drag.lastEdge) {
-      drag.lastEdge = edge;
-      b.supports = extendSupports(drag.supports0, drag.outer0, edge, drag.dir, drag.globals);
-      if (drag.dir > 0) b.x2 = edge; else b.x1 = edge;
-      drag.item.point.x = edge;
-      rebuild({ keepButtons: true });
+  function finishGesture(e, cancelled) {
+    const g = gesture;
+    if (!g || e.pointerId !== g.id) return;
+    gesture = null;
+    if (g.started) {
+      controls.enabled = true;
+      $("drag-label").style.display = "none";
+      g.h.end(g);
+    } else if (!cancelled && g.h.click) {
+      g.h.click();
     }
-    const outer = drag.dir > 0 ? last(b.supports) : b.supports[0];
-    showDragLabel(`Щит ${b.x2 - b.x1} мм · свес ${Math.abs(edge - outer)} мм`, e);
+  }
+  addEventListener("pointerup", e => finishGesture(e, false));
+  addEventListener("pointercancel", e => finishGesture(e, true));
+
+  function screenAxis(point) {
+    camera.updateMatrixWorld();
+    const a = project(point);
+    const b = project(point.clone().add(V(100, 0, 0)));
+    const vx = b.x - a.x, vy = b.y - a.y;
+    const len = Math.hypot(vx, vy) || 1;
+    return { ux: vx / len, uy: vy / len, ppm: Math.max(.01, len / 100) };
+  }
+  function dragMm(g, e) {
+    const ax = g.data.axis;
+    return ((e.clientX - g.x0) * ax.ux + (e.clientY - g.y0) * ax.uy) / ax.ppm;
   }
 
-  function moveSupport(along, e) {
-    const nx = clamp(r10(drag.x0 + along), drag.lo, drag.hi);
-    if (nx !== drag.lastX) {
-      drag.lastX = nx;
-      for (const r of drag.refs) {
-        const b = boards.find(q => q.id === r.id);
-        if (b) b.supports[r.idx] = nx;
-      }
-      drag.item.point.x = nx;
-      rebuild({ keepButtons: true });
+  function greenHandlers(id, dir) {
+    return {
+      click() { extendClick(id, dir); },
+      start() {
+        const b = boardById(id);
+        if (!b) return null;
+        const ov = ovSetting();
+        const edge = dir > 0 ? b.R : b.L;
+        const s0 = dir > 0 ? last(b.sup) : b.sup[0];
+        const lim = edgeLimit(b, dir);
+        const lo = dir > 0 ? Math.min(edge, s0 + ov) : lim;
+        const hi = dir > 0 ? lim : Math.max(edge, s0 - ov);
+        return { b, ov, edge, s0, base: [...b.sup], lo, hi, axis: screenAxis(V(edge, b.y, frontZ())) };
+      },
+      move(g, e) {
+        const d = g.data, b = d.b;
+        const target = clamp(r10(d.edge + dragMm(g, e)), d.lo, d.hi);
+        const sup = [...d.base];
+        let ext = d.s0;
+        while (dir * (target - ext) > MM.maxOverhang) {
+          const dist = dir * (target - ext);
+          const st = clamp(r10(dist - d.ov), MM.minSpan, MM.maxSpan);
+          ext += dir * st;
+          sup.push(ext);
+        }
+        sup.sort(byNum);
+        const before = `${b.L}:${b.R}:${b.sup.join(",")}`;
+        b.sup = sup;
+        if (dir > 0) b.R = target; else b.L = target;
+        g.c.point.set(target, b.y, frontZ());
+        if (before !== `${b.L}:${b.R}:${b.sup.join(",")}`) rebuild(); else requestRender();
+        showLabel(`Щит: ${b.R - b.L} мм · свес: ${dir * (target - ext)} мм`, e, g.touch);
+      },
+      end() { normalize(); rebuild(); }
+    };
+  }
+
+  function supportHandlers(part) {
+    return {
+      click() { toast("Потяните «⇔» влево или вправо, чтобы сдвинуть опору"); },
+      start() {
+        const range = partRange(part);
+        keepNeighboursSeparated(part);
+        const low = Math.min(...part.items.map(i => i.y));
+        return {
+          ids: part.items.map(i => i.id), x0: part.x, cur: part.x, range, low,
+          axis: screenAxis(V(part.x, low - MM.cap, 0))
+        };
+      },
+      move(g, e) {
+        const d = g.data;
+        const nx = clamp(r10(d.x0 + dragMm(g, e)), d.range.lo, d.range.hi);
+        if (nx !== d.cur) { moveSupports(d, nx); rebuild(); }
+        g.c.point.set(d.cur, d.low - MM.cap, 0);
+        requestRender();
+        showLabel(supportLabel(d), e, g.touch);
+      },
+      end() { rebuild(); }
+    };
+  }
+
+  function moveSupports(d, nx) {
+    for (const id of d.ids) {
+      const b = boardById(id);
+      if (!b) continue;
+      const i = b.sup.indexOf(d.cur);
+      if (i >= 0) b.sup[i] = nx;
+      b.sup.sort(byNum);
     }
-    const r = drag.refs[0];
-    const b = boards.find(q => q.id === r.id);
-    if (!b) return;
-    const s = b.supports, i = r.idx;
-    const left = i > 0 ? `пролёт ${nx - s[i - 1]}` : `свес ${nx - b.x1}`;
-    const right = i < s.length - 1 ? `пролёт ${s[i + 1] - nx}` : `свес ${b.x2 - nx}`;
-    showDragLabel(`← ${left} мм | ${right} мм →`, e);
-  }
-
-  function onPointerUp(e) {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    const d = drag;
-    drag = null;
-    controls.enabled = true;
-    $("buttons").classList.remove("dragging");
-    d.item.el.classList.remove("active");
-    $("drag-label").style.display = "none";
-    if (!d.moved) {
-      if (d.type === "edge" && e.type === "pointerup") extendByClick(d.id, d.dir);
-      return;
+    d.cur = nx;
+    const list = boards.filter(b => b.sup.includes(nx))
+      .map(b => ({ y: b.y, mine: d.ids.includes(b.id) }))
+      .sort((p, q) => p.y - q.y);
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].mine !== list[i - 1].mine && list[i].y - list[i - 1].y > 2 * MM.cap)
+        broken.add(pipeKey(nx, list[i - 1].y, list[i].y));
     }
-    rebuild();
   }
 
-  function showDragLabel(text, e) {
-    const l = $("drag-label");
-    l.textContent = text;
-    l.style.display = "block";
-    const up = e.pointerType === "mouse" ? 38 : 76;
-    const half = Math.min(140, innerWidth / 2 - 10);
-    l.style.left = `${clamp(e.clientX, half, innerWidth - half)}px`;
-    l.style.top = `${Math.max(24, e.clientY - up)}px`;
+  function supportLabel(d) {
+    const b = boardById(d.ids[0]);
+    if (!b) return "";
+    const i = b.sup.indexOf(d.cur);
+    const left = i > 0 ? `слева ${d.cur - b.sup[i - 1]} мм` : `свес слева ${d.cur - b.L} мм`;
+    const right = i < b.sup.length - 1 ? `справа ${b.sup[i + 1] - d.cur} мм` : `свес справа ${b.R - d.cur} мм`;
+    return `${left} · ${right}`;
   }
 
-  addEventListener("pointermove", onPointerMove, { passive: false });
-  addEventListener("pointerup", onPointerUp);
-  addEventListener("pointercancel", onPointerUp);
+  function showLabel(text, e, touch) {
+    const label = $("drag-label");
+    label.textContent = text;
+    label.style.display = "block";
+    const w = label.offsetWidth;
+    label.style.left = `${clamp(e.clientX, w / 2 + 8, innerWidth - w / 2 - 8)}px`;
+    label.style.top = `${Math.max(20, e.clientY - (touch ? 64 : 36))}px`;
+  }
 
-  /* ---------------- Наложение (кнопки и размеры) ---------------- */
+  // ---------- Наложение кнопок и размеров ----------
+  function project(point) {
+    const p = point.clone().project(camera);
+    return { x: (p.x * .5 + .5) * innerWidth, y: (-p.y * .5 + .5) * innerHeight, z: p.z };
+  }
+  const inFront = p => p.z > -1 && p.z < 1;
   function setLine(node, x1, y1, x2, y2) {
-    node.setAttribute("x1", x1);
-    node.setAttribute("y1", y1);
-    node.setAttribute("x2", x2);
-    node.setAttribute("y2", y2);
+    node.setAttribute("x1", x1); node.setAttribute("y1", y1);
+    node.setAttribute("x2", x2); node.setAttribute("y2", y2);
   }
 
   function updateOverlay() {
-    camera.updateMatrixWorld();
-    const W = innerWidth, H = innerHeight;
-
-    for (const it of buttons) {
-      const el = it.el;
-      let p = project(it.point);
-      let shown = visibleUI && p.z > -1 && p.z < 1;
-      if (shown && it.anchor) {
-        const a = project(it.anchor);
-        let vx = p.x - a.x, vy = p.y - a.y;
-        const len = Math.hypot(vx, vy);
-        if (len < it.minPx) {
-          if (len < 1) { vx = 0; vy = it.fallbackY; }
-          else { vx /= len; vy /= len; }
-          p = { x: a.x + vx * it.minPx, y: a.y + vy * it.minPx, z: p.z };
+    for (const c of controlsList) {
+      const p = project(c.point);
+      let shown = visibleUI && inFront(p);
+      if (shown) {
+        if (c.ax) {
+          const q = project(c.point.clone().add(V(100, 0, 0)));
+          const vx = q.x - p.x, vy = q.y - p.y, len = Math.hypot(vx, vy) || 1;
+          p.x += vx / len * c.ax;
+          p.y += vy / len * c.ax;
         }
+        if (c.dy) p.y += c.dy;
+        if (c.minFrom) {
+          const q = project(c.minFrom);
+          if (c.sign > 0 && q.y - p.y < c.minDist) p.y = q.y - c.minDist;
+          if (c.sign < 0 && p.y - q.y < c.minDist) p.y = q.y + c.minDist;
+        }
+        shown = p.x > -40 && p.x < innerWidth + 40 && p.y > -40 && p.y < innerHeight + 40;
       }
-      const x = p.x + it.dx, y = p.y + it.dy;
-      shown = shown && x > -40 && x < W + 40 && y > -40 && y < H + 40;
-      el.style.display = shown ? "grid" : "none";
-      if (shown) el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      c.el.style.display = shown ? "grid" : "none";
+      if (shown) { c.el.style.left = `${p.x}px`; c.el.style.top = `${p.y}px`; }
     }
 
     for (const d of dims) {
-      const a = project(d.start), b = project(d.end);
-      const shown = visibleUI && a.z > -1 && a.z < 1 && b.z > -1 && b.z < 1;
-      d.line.style.display = d.t1.style.display = d.t2.style.display = shown ? "" : "none";
-      if (!shown) { d.label.style.display = "none"; continue; }
-      const ay = a.y + d.dy, by = b.y + d.dy;
-      setLine(d.line, a.x, ay, b.x, by);
-      const dx = b.x - a.x, dy = by - ay;
-      const mag = Math.max(1, Math.hypot(dx, dy));
-      const nx = -dy / mag * 5, ny = dx / mag * 5;
-      setLine(d.t1, a.x - nx, ay - ny, a.x + nx, ay + ny);
-      setLine(d.t2, b.x - nx, by - ny, b.x + nx, by + ny);
-      const labelShown = !d.small || mag > d.w + 4;
-      d.label.style.display = labelShown ? "block" : "none";
-      if (labelShown) {
-        d.label.style.transform =
-          `translate(${(a.x + b.x) / 2}px, ${(ay + by) / 2}px) translate(-50%, -50%)`;
+      const A = project(d.a), B = project(d.b);
+      const shown = visibleUI && inFront(A) && inFront(B);
+      for (const n of [d.line, d.t1, d.t2]) n.style.display = shown ? "" : "none";
+      if (!shown) { if (d.label) d.label.style.display = "none"; continue; }
+      A.x += d.sx; A.y += d.sy; B.x += d.sx; B.y += d.sy;
+      setLine(d.line, A.x, A.y, B.x, B.y);
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / len * 5, ny = dx / len * 5;
+      setLine(d.t1, A.x - nx, A.y - ny, A.x + nx, A.y + ny);
+      setLine(d.t2, B.x - nx, B.y - ny, B.x + nx, B.y + ny);
+      if (d.label) {
+        if (!d.w) {
+          d.label.style.display = "block";
+          d.w = d.label.offsetWidth;
+          d.h = d.label.offsetHeight;
+        }
+        const need = d.side ? d.h + 2 : d.w + 6;
+        const fits = d.always || len >= need;
+        d.label.style.display = fits ? "block" : "none";
+        if (fits) {
+          d.label.style.left = `${(A.x + B.x) / 2 + d.lx}px`;
+          d.label.style.top = `${(A.y + B.y) / 2 + d.ly}px`;
+        }
       }
+    }
+
+    for (const x of exts) {
+      const A = project(x.a), B = project(x.b);
+      const shown = visibleUI && inFront(A) && inFront(B);
+      x.line.style.display = shown ? "" : "none";
+      if (shown) setLine(x.line, A.x + x.sax, A.y + x.say, B.x + x.sbx, B.y + x.sby);
     }
   }
 
-  /* ---------------- Камера ---------------- */
+  // ---------- Камера ----------
   function fitView() {
-    const bb = bounds();
-    const w = bb.maxX - bb.minX + 400;
-    const h = bb.maxY - bb.minY + 420;
-    const cx = (bb.minX + bb.maxX) / 2, cy = (bb.minY + bb.maxY) / 2;
+    if (!boards.length) return;
+    const minL = Math.min(...boards.map(b => b.L));
+    const maxR = Math.max(...boards.map(b => b.R));
+    const minY = Math.min(...boards.map(b => b.y)) - MM.cap;
+    const maxY = Math.max(...boards.map(b => b.y)) + MM.cap;
+    const w = maxR - minL + 500, h = maxY - minY + 400;
     const t = Math.tan(camera.fov * Math.PI / 360);
-    let usableW = innerWidth, usableH = innerHeight;
-    if (isMobile()) usableH = Math.max(200, innerHeight - 150);
-    else usableW = Math.max(300, innerWidth - 660);
-    const distH = (h / 2) / t * (innerHeight / usableH);
-    const distW = (w / 2) / (t * camera.aspect) * (innerWidth / usableW);
-    const dist = clamp(Math.max(distH, distW, 900), controls.minDistance, controls.maxDistance);
-    controls.target.set(cx, cy, -60);
-    const dir = V(0.3, 0.22, 1).normalize();
+    let fracW = 1, fracH = 1;
+    if (mqMobile.matches) fracH = Math.max(.5, (innerHeight - 70) / innerHeight);
+    else fracW = Math.max(.35, (innerWidth - 660) / innerWidth);
+    const dist = Math.max(h / 2 / t / fracH, w / 2 / (t * camera.aspect) / fracW, 700);
+    const dir = V(.38, .27, 1).normalize();
+    controls.target.set((minL + maxR) / 2, (minY + maxY) / 2, (wallZ() + frontZ()) / 2);
     camera.position.copy(controls.target).addScaledVector(dir, dist);
+    camera.far = Math.max(12000, dist * 6);
+    camera.updateProjectionMatrix();
     controls.update();
-    needsRender = true;
+    requestRender();
   }
 
-  /* ---------------- Интерфейс ---------------- */
+  // ---------- Интерфейс ----------
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
   function setSheet(name) {
     openSheet = name;
     $("settings").classList.toggle("open", name === "settings");
     $("estimate").classList.toggle("open", name === "estimate");
-    $("tab-settings").classList.toggle("active", name === "settings");
-    $("tab-estimate").classList.toggle("active", name === "estimate");
+    $("btn-settings").classList.toggle("active", name === "settings");
+    $("btn-estimate").classList.toggle("active", name === "estimate");
   }
-  $("tab-settings").addEventListener("click", () =>
-    setSheet(openSheet === "settings" ? null : "settings"));
-  $("tab-estimate").addEventListener("click", () =>
-    setSheet(openSheet === "estimate" ? null : "estimate"));
-  document.querySelectorAll(".sheet-close").forEach(btn =>
-    btn.addEventListener("click", () => setSheet(null)));
+  $("btn-settings").addEventListener("click", () => setSheet(openSheet === "settings" ? null : "settings"));
+  $("btn-estimate").addEventListener("click", () => setSheet(openSheet === "estimate" ? null : "estimate"));
+  document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => setSheet(null)));
   renderer.domElement.addEventListener("pointerdown", () => {
-    if (openSheet && isMobile()) setSheet(null);
+    if (mqMobile.matches && openSheet) setSheet(null);
   });
 
   document.querySelectorAll(".stepper button").forEach(btn => {
     btn.addEventListener("click", () => {
-      const input = $(btn.dataset.for);
-      const v = Number(input.value) || 0;
-      input.value = clamp(v + Number(btn.dataset.step), Number(input.min), Number(input.max));
-      input.dispatchEvent(new Event("change"));
+      const inp = $(btn.dataset.for);
+      const v = Number(inp.value) || 0;
+      inp.value = clamp(v + Number(btn.dataset.step), Number(inp.min), Number(inp.max));
+      inp.dispatchEvent(new Event("change"));
     });
   });
-  document.querySelectorAll('input[type="number"]').forEach(inp => {
-    inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
-  });
 
-  $("deep").addEventListener("change", rebuild);
-  $("height").addEventListener("change", rebuild);
+  for (const id of ["first", "overhang", "length"]) {
+    $(id).addEventListener("keydown", e => { if (e.key === "Enter") e.target.blur(); });
+  }
   $("first").addEventListener("change", applyFirstSpan);
-  $("overhang").addEventListener("change", applyOverhang);
-  $("newlen").addEventListener("change", () => { $("newlen").value = newLenSetting(); });
+  $("overhang").addEventListener("input", () => {
+    const v = Number($("overhang").value);
+    if (Number.isFinite(v) && v >= MM.minOverhang && v <= MM.maxOverhang) applyOverhang();
+  });
+  $("overhang").addEventListener("change", () => {
+    $("overhang").value = ovSetting();
+    applyOverhang();
+  });
+  $("length").addEventListener("change", () => { $("length").value = sectionLen(); });
+  $("height").addEventListener("change", rebuild);
+  $("deep").addEventListener("change", rebuild);
 
   $("reset").addEventListener("click", () => {
     $("first").value = 500;
-    initialState();
+    boards = [makeInitialBoard()];
+    broken.clear();
     rebuild();
     fitView();
-    if (isMobile()) setSheet(null);
-  });
-  $("empty-add").addEventListener("click", () => {
-    initialState();
-    rebuild();
-    fitView();
+    if (mqMobile.matches) setSheet(null);
   });
 
   $("toggle").addEventListener("click", () => {
     visibleUI = !visibleUI;
-    document.body.classList.toggle("ui-hidden", !visibleUI);
-    if (!isMobile()) $("settings").style.display = visibleUI ? "" : "none";
+    if (!mqMobile.matches) $("settings").style.display = visibleUI ? "" : "none";
     $("toggle").textContent = visibleUI ? "◉" : "○";
-    const t = visibleUI ? "Скрыть размеры и управление" : "Показать размеры и управление";
-    $("toggle").title = t;
-    $("toggle").setAttribute("aria-label", t);
-    needsRender = true;
+    const title = visibleUI ? "Скрыть размеры и управление" : "Показать размеры и управление";
+    $("toggle").title = title;
+    $("toggle").setAttribute("aria-label", title);
+    requestRender();
   });
   $("fit").addEventListener("click", fitView);
-
-  mqMobile.addEventListener && mqMobile.addEventListener("change", () => {
-    $("settings").style.display = (!isMobile() && !visibleUI) ? "none" : "";
-    setSheet(null);
-    needsRender = true;
-  });
-
-  $("buttons").addEventListener("contextmenu", e => e.preventDefault());
-  document.addEventListener("gesturestart", e => e.preventDefault());
 
   addEventListener("resize", () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
-    needsRender = true;
+    requestRender();
+  });
+  onMq(mqPhone, rebuild);
+  onMq(mqCoarse, rebuild);
+  onMq(mqMobile, () => {
+    setSheet(null);
+    $("settings").style.display = (!mqMobile.matches && !visibleUI) ? "none" : "";
+    rebuild();
   });
 
-  controls.addEventListener("change", () => { needsRender = true; });
-
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    if (needsRender) {
-      needsRender = false;
+  function loop() {
+    requestAnimationFrame(loop);
+    const moved = controls.update();
+    if (moved || dirty) {
+      dirty = false;
       renderer.render(scene, camera);
       updateOverlay();
     }
   }
 
-  initialState();
+  boards = [makeInitialBoard()];
   rebuild();
   fitView();
-  animate();
-  if (isCoarse()) setTimeout(() => toast("Один палец — вращение, два — масштаб и сдвиг"), 700);
+  loop();
 })();
 </script>
 </body>
